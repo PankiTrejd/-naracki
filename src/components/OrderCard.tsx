@@ -23,6 +23,7 @@ import { OrderStatus } from "@/types/order";
 
 interface OrderCardProps {
   id: string;
+  order_number?: number;
   customerName: string;
   address: {
     street: string;
@@ -47,6 +48,7 @@ interface OrderCardProps {
 
 const OrderCard = ({
   id = "123456",
+  order_number,
   customerName = "John Doe",
   address = { street: "123 Main St", city: "Anytown" },
   phoneNumber = "+1 (555) 123-4567",
@@ -76,6 +78,22 @@ const OrderCard = ({
     setCurrentStatus(newStatus);
     onStatusChange(id, newStatus);
   };
+
+  // Helper to download all attachments
+  const handleDownloadAll = () => {
+    if (!attachments || attachments.length === 0) return;
+    attachments.forEach((attachment) => {
+      const link = document.createElement('a');
+      link.href = attachment.url;
+      link.download = attachment.name;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  };
+
+  console.log('OrderCard attachments:', attachments);
 
   return (
     <Card className="w-full mb-4 bg-white border-l-4 border-l-primary hover:shadow-md transition-shadow">
@@ -137,16 +155,14 @@ const OrderCard = ({
             </div>
             {currentStatus !== "Done" && (
               <div className="flex gap-2">
-                {currentStatus === "New" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
-                    onClick={() => handleStatusChange("Accepted")}
-                  >
-                    Прими
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+                  onClick={() => handleStatusChange("Accepted")}
+                >
+                  Прими
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -219,7 +235,12 @@ const OrderCard = ({
 
             {attachments && attachments.length > 0 && (
               <div className="mt-4">
-                <h4 className="font-medium mb-2">Attachments</h4>
+                <div className="flex items-center mb-2">
+                  <h4 className="font-medium mr-4">Прикачени фајлови</h4>
+                  <Button size="sm" variant="outline" onClick={handleDownloadAll}>
+                    Преземи ги сите
+                  </Button>
+                </div>
                 <ScrollArea className="h-[120px] w-full">
                   <div className="flex flex-wrap gap-2">
                     {attachments.map((attachment) => (
@@ -229,17 +250,33 @@ const OrderCard = ({
                         onClick={() => onViewMedia(attachment.id)}
                       >
                         {attachment.type === "image" ? (
-                          <div className="w-24 h-24 rounded-md overflow-hidden border border-border">
-                            <img
-                              src={attachment.url}
-                              alt={attachment.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                          <a
+                            href={attachment.url}
+                            download={attachment.name}
+                            className="block"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <div className="w-24 h-24 rounded-md overflow-hidden border border-border">
+                              <img
+                                src={attachment.url}
+                                alt={attachment.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </a>
                         ) : (
-                          <div className="w-24 h-24 rounded-md flex items-center justify-center bg-muted border border-border">
-                            <FileText className="h-8 w-8 text-muted-foreground" />
-                          </div>
+                          <a
+                            href={attachment.url}
+                            download={attachment.name}
+                            className="block"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <div className="w-24 h-24 rounded-md flex items-center justify-center bg-muted border border-border">
+                              <FileText className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          </a>
                         )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                           <p className="text-white text-xs truncate max-w-[90%] px-1">
@@ -255,7 +292,7 @@ const OrderCard = ({
           </CardContent>
           <CardFooter className="p-4 pt-0 flex justify-end">
             <div className="flex space-x-2">
-              <Badge variant="outline">{`Order #${id}`}</Badge>
+              <Badge variant="outline">{`Order #${order_number ?? id}`}</Badge>
             </div>
           </CardFooter>
         </>

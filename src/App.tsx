@@ -1,5 +1,11 @@
 import { Suspense } from "react";
-import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
+import {
+  useRoutes,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
 import Home from "./components/home";
 import NewOrderForm from "./components/NewOrderForm";
 import Navigation from "./components/Navigation";
@@ -9,6 +15,7 @@ import { useState } from "react";
 import { Order } from "./types/order";
 
 function App() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [completedOrders, setCompletedOrders] = useState<Order[]>([]);
   const [newOrderCount, setNewOrderCount] = useState<number>(0);
@@ -43,6 +50,11 @@ function App() {
     setNewOrderCount(0);
   };
 
+  // Function to handle navigation to ensure Navigation component is always visible
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   return (
     <Suspense fallback={<p>Loading...</p>}>
       <>
@@ -64,7 +76,7 @@ function App() {
           />
           <Route
             path="/completed"
-            element={<CompletedOrders orders={completedOrders} />}
+            element={<CompletedOrders />}
           />
         </Routes>
         {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}

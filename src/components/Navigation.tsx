@@ -2,7 +2,6 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
 import { PlusCircle, LayoutDashboard, CheckCircle } from "lucide-react";
-import { AvatarImage } from "./ui/avatar.tsx";
 import { Badge } from "./ui/badge";
 
 interface NavigationProps {
@@ -15,10 +14,9 @@ const Navigation = ({ newOrderCount = 0 }: NavigationProps) => {
   return (
     <nav className="border-b sticky top-0 z-10 bg-background">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 className="text-xl font-bold">
-          Order Receiver
-          <AvatarImage />
-        </h1>
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Company Logo" className="h-12 w-12 object-contain" />
+        </div>
         <div className="flex gap-2">
           <Button
             variant={location.pathname === "/new-order" ? "default" : "outline"}

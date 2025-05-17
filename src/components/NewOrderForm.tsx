@@ -14,12 +14,16 @@ import { useNavigate } from "react-router-dom";
 import { Order, Attachment } from "@/types/order";
 import { X, Upload, FileText, Image as ImageIcon } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { Toaster } from "./ui/toaster";
+import { useToast } from "./ui/use-toast";
+import { addOrder } from "@/lib/orderService";
 
 interface NewOrderFormProps {
   onOrderSubmit: (order: Order) => void;
 }
 
 const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
@@ -31,6 +35,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
     notes: "",
   });
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -43,12 +48,13 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const filesList = e.target.files;
+    if (!filesList || filesList.length === 0) return;
 
     const newAttachments: Attachment[] = [];
+    const newFiles: File[] = [];
 
-    Array.from(files).forEach((file) => {
+    Array.from(filesList).forEach((file) => {
       const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const isImage = file.type.startsWith("image/");
       const type = isImage ? "image" : "document";
@@ -60,9 +66,11 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
         url,
         name: file.name,
       });
+      newFiles.push(file);
     });
 
     setAttachments((prev) => [...prev, ...newAttachments]);
+    setFiles((prev) => [...prev, ...newFiles]);
 
     // Reset the file input
     if (fileInputRef.current) {
@@ -80,14 +88,14 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
       }
       return filtered;
     });
+    setFiles((prev) => prev.filter((file) => file.name !== attachments.find(a => a.id === id)?.name));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create new order object
+    // Create new order object (no id, order_number will be assigned by backend)
     const newOrder: Order = {
-      id: `${Date.now()}`,
       customerName: formData.customerName,
       address: {
         street: formData.street,
@@ -102,13 +110,18 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
     };
 
     try {
-      // Submit the order to Firebase
-      // Note: In a real implementation, we would collect the actual File objects
-      // and upload them to Firebase Storage. For this demo, we're just using the attachments as is.
-      await addOrder(newOrder, []);
+      // Submit the order to Supabase
+      const { id: orderId, order_number } = await addOrder(newOrder, files);
+      console.log("Order submitted successfully with ID:", orderId);
+
+      // Show success toast with the sequential order number
+      toast({
+        title: "Нарачката е успешно поднесена!",
+        description: `Нарачка #${order_number} е креирана.`,
+      });
 
       // Also notify the parent component
-      onOrderSubmit(newOrder);
+      onOrderSubmit({ ...newOrder, id: orderId, order_number });
 
       // Reset form
       setFormData({
@@ -127,12 +140,17 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
         }
       });
       setAttachments([]);
+      setFiles([]);
 
       // Navigate to dashboard
       navigate("/dashboard");
     } catch (error) {
       console.error("Error submitting order:", error);
-      // You could add error handling UI here
+      toast({
+        title: "Грешка при поднесување на нарачката",
+        description: "Обидете се повторно подоцна.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -208,7 +226,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Забелешки (по желба)</Label>
+              <Label htmlFor="notes">Забелешки</Label>
               <Textarea
                 id="notes"
                 name="notes"
@@ -220,7 +238,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label>Прикачи фајлови</Label>
+              <Label>Прикачи Документи</Label>
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
@@ -229,7 +247,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
                   className="flex items-center gap-2"
                 >
                   <Upload className="h-4 w-4" />
-                  Додади фајлови
+                  Кликни ме
                 </Button>
                 <input
                   type="file"
@@ -237,7 +255,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
                   onChange={handleFileChange}
                   className="hidden"
                   multiple
-                  accept="image/*,.pdf,.doc,.docx,.zip"
+                  accept="image/*,.pdf,.dxf,.ai,.png,.psd,.svg"
                 />
               </div>
 

@@ -4,6 +4,7 @@ import OrderList from "./OrderList";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Order as OrderType, OrderStatus } from "@/types/order";
+import { getOrders, subscribeToOrders, updateOrderStatus } from "@/lib/orderService";
 
 interface HomeProps {
   externalOrders?: OrderType[];
@@ -27,8 +28,53 @@ export default function Home({
   const [newOrderCount, setNewOrderCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Handle external orders (from the form)
+  // Subscribe to orders from Supabase and handle external orders
   useEffect(() => {
+    // Initial fetch of orders
+    getOrders()
+      .then((fetchedOrders) => {
+        // Filter out orders that are "Done"
+        const activeOrders = fetchedOrders.filter(
+          (order) => order.status !== "Done",
+        );
+        setOrders(activeOrders);
+      })
+      .catch((error) => console.error("Error fetching orders:", error));
+
+    // Subscribe to active orders (not "Done")
+    const unsubscribe = subscribeToOrders((fetchedOrders) => {
+      // Filter out orders that are "Done"
+      const activeOrders = fetchedOrders.filter(
+        (order) => order.status !== "Done",
+      );
+
+      setOrders(activeOrders);
+
+      // Check for new orders to play notification
+      const newOrders = activeOrders.filter((order) => order.status === "New");
+      if (newOrders.length > 0) {
+        setNewOrderCount(newOrders.length);
+
+        // Play notification sound
+        if (notificationSound.current) {
+          notificationSound.current.play().catch((error) => {
+            console.error("Error playing notification sound:", error);
+          });
+        }
+
+        // Show browser notification
+        if (Notification.permission === "granted") {
+          newOrders.forEach((order) => {
+            new Notification("Нова Нарачка", {
+              body: `Нова нарачка од ${order.customerName}`,
+              icon: "/vite.svg",
+            });
+          });
+        }
+      }
+    });
+
+    // Handle external orders (from the form)
     if (externalOrders && externalOrders.length > 0) {
       setOrders((prevOrders) => {
         // Filter out any duplicates by ID
@@ -63,6 +109,9 @@ export default function Home({
         return prevOrders;
       });
     }
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [externalOrders]);
 
   // Request notification permission on component mount
@@ -75,13 +124,19 @@ export default function Home({
     }
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    // Simulate refresh delay
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Reset new order count
       setNewOrderCount(0);
-    }, 1000);
+      // Wait a moment to show the loading state
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error("Error refreshing orders:", error);
+      setIsLoading(false);
+    }
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
@@ -148,7 +203,7 @@ export default function Home({
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b sticky top-0 z-10 bg-background">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Нарачки Dashboard</h1>
+          <h1 className="text-2xl font-bold">Панки Трејд Нарачки</h1>
           <div className="flex items-center gap-4">
             <div className="relative">
               <Button
@@ -176,13 +231,6 @@ export default function Home({
         </div>
       </header>
       <main className="flex-1 container mx-auto px-4 py-6">
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Нови Нарачки</h2>
-          <p className="text-sm text-muted-foreground">
-            {orders.length} {orders.length === 1 ? "order" : "orders"} received
-          </p>
-        </div>
-
         <OrderList
           orders={orders}
           onStatusChange={handleStatusChange}
@@ -192,7 +240,7 @@ export default function Home({
       </main>
       <footer className="border-t py-4">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          Order Receiver Dashboard © {new Date().getFullYear()}
+          Кристиан Костов Програмерчич © {new Date().getFullYear()}
         </div>
       </footer>
     </div>

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import OrderCard from "./OrderCard";
 import { Badge } from "@/components/ui/badge";
 import { Order } from "@/types/order";
+import { getOrders, subscribeToOrders } from "@/lib/orderService";
 
 interface CompletedOrdersProps {
   orders?: Order[];
@@ -15,8 +16,18 @@ const CompletedOrders = ({
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Subscribe to completed orders from Firebase
+  // Subscribe to completed orders from Supabase
   useEffect(() => {
+    // Initial fetch of completed orders
+    getOrders("Done")
+      .then((fetchedOrders) => {
+        setOrders(fetchedOrders);
+        setLastUpdated(new Date());
+      })
+      .catch((error) =>
+        console.error("Error fetching completed orders:", error),
+      );
+
     const unsubscribe = subscribeToOrders((fetchedOrders) => {
       // Only get orders with status "Done"
       const completedOrders = fetchedOrders.filter(

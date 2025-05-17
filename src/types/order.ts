@@ -8,7 +8,8 @@ export interface Attachment {
 }
 
 export interface Order {
-  id: string;
+  id?: string;
+  order_number?: number;
   customerName: string;
   address: {
     street: string;

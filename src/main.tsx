@@ -4,15 +4,40 @@ import App from "./App.tsx";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 
-import { TempoDevtools } from "tempo-devtools";
-TempoDevtools.init();
+// Initialize TempoDevtools
+const initTempoDevtools = async () => {
+  try {
+    const { TempoDevtools } = await import("tempo-devtools");
+    TempoDevtools.init();
+  } catch (error) {
+    console.error("Failed to initialize TempoDevtools:", error);
+  }
+};
 
-const basename = import.meta.env.BASE_URL;
+// Initialize the app
+const initApp = () => {
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    throw new Error("Root element not found");
+  }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <BrowserRouter basename={basename}>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>,
-);
+  try {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </React.StrictMode>
+    );
+  } catch (error) {
+    console.error("Failed to render app:", error);
+    rootElement.innerHTML = `<div style="color: red; padding: 20px;">
+      Failed to render app. Please check the console for errors.
+    </div>`;
+  }
+};
+
+// Start the app
+initTempoDevtools().then(() => {
+  initApp();
+});

@@ -80,6 +80,7 @@ const OrderList = ({
               <OrderCard
                 key={order.id}
                 id={order.id}
+                order_number={order.order_number}
                 customerName={order.customerName}
                 address={order.address}
                 phoneNumber={order.phoneNumber}
