@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { OrderStatus } from "@/types/order";
+import { format } from "date-fns";
+import { mk } from "date-fns/locale";
 
 interface OrderCardProps {
   id: string;
@@ -98,16 +100,16 @@ const OrderCard = ({
   return (
     <Card className="w-full mb-4 bg-white border-l-4 border-l-primary hover:shadow-md transition-shadow">
       {/* Collapsed View */}
-      <CardHeader className="p-4">
-        <div className="flex justify-between items-center">
+      <CardHeader className="p-2 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div
-            className="flex items-center space-x-4 cursor-pointer"
+            className="flex items-center space-x-2 sm:space-x-4 cursor-pointer"
             onClick={onToggleExpand}
           >
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <h3
-                  className={`text-lg font-semibold ${currentStatus === "Done" ? "line-through text-muted-foreground" : ""}`}
+                  className={`text-base sm:text-lg font-semibold ${currentStatus === "Done" ? "line-through text-muted-foreground" : ""}`}
                 >
                   {customerName}
                 </h3>
@@ -123,6 +125,7 @@ const OrderCard = ({
                   ${currentStatus === "New" ? "bg-blue-500" : ""}
                   ${currentStatus === "Accepted" ? "border-yellow-500 text-yellow-700" : ""}
                   ${currentStatus === "Done" ? "bg-green-500" : ""}
+                  text-xs sm:text-sm
                 `}
                 >
                   {currentStatus === "New" && "Нова"}
@@ -138,35 +141,39 @@ const OrderCard = ({
                   )}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">{timestamp}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {format(new Date(timestamp), "MMMM d - EEEE", { locale: mk })}
+              </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="text-right mr-2">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 w-full sm:w-auto">
+            <div className="text-right mr-0 sm:mr-2">
               <span
-                className={`font-bold ${currentStatus === "Accepted" ? "text-2xl" : "text-lg"}`}
+                className={`font-bold ${currentStatus === "Accepted" ? "text-lg sm:text-2xl" : "text-base sm:text-lg"}`}
               >
                 {totalPrice.toLocaleString("mk-MK", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
-                })}{" "}
+                })} {" "}
                 ден.
               </span>
             </div>
             {currentStatus !== "Done" && (
-              <div className="flex gap-2">
+              <div className="flex flex-row gap-2 w-full sm:w-auto">
+                {currentStatus !== "Accepted" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-yellow-500 text-yellow-700 hover:bg-yellow-50 px-2 py-1 w-1/2 sm:w-auto"
+                    onClick={() => handleStatusChange("Accepted")}
+                  >
+                    Прими
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
-                  onClick={() => handleStatusChange("Accepted")}
-                >
-                  Прими
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-green-500 text-green-700 hover:bg-green-50"
+                  className="border-green-500 text-green-700 hover:bg-green-50 px-2 py-1 w-full sm:w-auto"
                   onClick={() => handleStatusChange("Done")}
                 >
                   Готова
@@ -176,7 +183,7 @@ const OrderCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="p-0 h-8 w-8"
+              className="p-0 h-8 w-8 self-end sm:self-auto"
               onClick={onToggleExpand}
             >
               {isExpanded ? (
@@ -193,25 +200,25 @@ const OrderCard = ({
       {isExpanded && (
         <>
           <Separator />
-          <CardContent className="p-4 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="p-2 sm:p-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
               <div>
-                <h4 className="font-medium mb-2">Customer Information</h4>
-                <div className="space-y-2">
+                <h4 className="font-medium mb-1 sm:mb-2 text-base sm:text-lg">Customer Information</h4>
+                <div className="space-y-1 sm:space-y-2">
                   <div className="flex items-start">
                     <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
                     <div>
-                      <p className="text-sm">{address.street}</p>
-                      <p className="text-sm">{address.city}</p>
+                      <p className="text-xs sm:text-sm">{address.street}</p>
+                      <p className="text-xs sm:text-sm">{address.city}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <p className="text-sm">{phoneNumber}</p>
+                    <p className="text-xs sm:text-sm">{phoneNumber}</p>
                   </div>
                   <div className="flex items-center">
                     <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <p className="text-sm font-medium">
+                    <p className="text-xs sm:text-sm font-medium">
                       {totalPrice.toLocaleString("mk-MK", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -224,29 +231,29 @@ const OrderCard = ({
 
               {notes && (
                 <div>
-                  <h4 className="font-medium mb-2">Notes</h4>
+                  <h4 className="font-medium mb-1 sm:mb-2 text-base sm:text-lg">Notes</h4>
                   <div className="flex items-start">
                     <FileText className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
-                    <p className="text-sm">{notes}</p>
+                    <p className="text-xs sm:text-sm">{notes}</p>
                   </div>
                 </div>
               )}
             </div>
 
             {attachments && attachments.length > 0 && (
-              <div className="mt-4">
-                <div className="flex items-center mb-2">
-                  <h4 className="font-medium mr-4">Прикачени фајлови</h4>
-                  <Button size="sm" variant="outline" onClick={handleDownloadAll}>
+              <div className="mt-2 sm:mt-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 gap-2 sm:gap-4">
+                  <h4 className="font-medium mr-0 sm:mr-4 text-base sm:text-lg">Прикачени фајлови</h4>
+                  <Button size="sm" variant="outline" onClick={handleDownloadAll} className="w-full sm:w-auto">
                     Преземи ги сите
                   </Button>
                 </div>
-                <ScrollArea className="h-[120px] w-full">
-                  <div className="flex flex-wrap gap-2">
+                <ScrollArea className="h-[120px] w-full overflow-x-auto">
+                  <div className="flex flex-nowrap gap-2">
                     {attachments.map((attachment) => (
                       <div
                         key={attachment.id}
-                        className="relative group cursor-pointer"
+                        className="relative group cursor-pointer min-w-[96px]"
                         onClick={() => onViewMedia(attachment.id)}
                       >
                         {attachment.type === "image" ? (
@@ -290,7 +297,7 @@ const OrderCard = ({
               </div>
             )}
           </CardContent>
-          <CardFooter className="p-4 pt-0 flex justify-end">
+          <CardFooter className="p-2 sm:p-4 pt-0 flex justify-end">
             <div className="flex space-x-2">
               <Badge variant="outline">{`Order #${order_number ?? id}`}</Badge>
             </div>
