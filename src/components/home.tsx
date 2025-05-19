@@ -64,7 +64,7 @@ export default function Home({
         }
 
         // Show browser notification
-        if (Notification.permission === "granted") {
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
           newOrders.forEach((order) => {
             new Notification("Нова Нарачка", {
               body: `Нова нарачка од ${order.customerName}`,
@@ -95,7 +95,7 @@ export default function Home({
           }
 
           // Show browser notification
-          if (Notification.permission === "granted") {
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
             newOrders.forEach((order) => {
               new Notification("Нова Нарачка", {
                 body: `Нова нарачка од ${order.customerName}`,
@@ -118,6 +118,8 @@ export default function Home({
   // Request notification permission on component mount
   useEffect(() => {
     if (
+      typeof window !== "undefined" &&
+      "Notification" in window &&
       Notification.permission !== "granted" &&
       Notification.permission !== "denied"
     ) {
