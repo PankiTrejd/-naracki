@@ -5,6 +5,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Order as OrderType, OrderStatus } from "@/types/order";
 import { getOrders, subscribeToOrders, updateOrderStatus } from "@/lib/orderService";
+import { inpostaService } from '../services/inposta';
 
 interface HomeProps {
   externalOrders?: OrderType[];
@@ -196,6 +197,29 @@ export default function Home({
       }
     } catch (error) {
       console.error("Error updating order status:", error);
+    }
+  };
+
+  const testCreateShipment = async () => {
+    try {
+      const response = await inpostaService.createShipment({
+        shipment_type: 'Пакети',
+        shipment_type_value: '1',
+        receiver: {
+          name: 'Test Receiver',
+          city: 'Скопје',
+          phone_number: '+389 71 236 456',
+          address: 'Test Address'
+        },
+        package_value: 100,
+        number_packages: 1,
+        shipping_payment_method: 'П-Г'
+      });
+      alert('Shipment created! Reference: ' + response.shipment.reference);
+      console.log(response);
+    } catch (err) {
+      alert('Error creating shipment: ' + err);
+      console.error(err);
     }
   };
 

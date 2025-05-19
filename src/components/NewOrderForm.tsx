@@ -12,11 +12,35 @@ import {
 import { Label } from "./ui/label";
 import { useNavigate } from "react-router-dom";
 import { Order, Attachment } from "@/types/order";
-import { X, Upload, FileText, Image as ImageIcon } from "lucide-react";
+import { X, Upload, FileText } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Toaster } from "./ui/toaster";
 import { useToast } from "./ui/use-toast";
 import { addOrder } from "@/lib/orderService";
+import { inpostaService } from '../services/inposta';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+
+// InPosta shipment types
+const SHIPMENT_TYPES = [
+  { value: "Пакети", label: "Пакети" },
+  { value: "Писма", label: "Писма" },
+  { value: "Габаритни пратки", label: "Габаритни пратки" },
+  { value: "Гуми", label: "Гуми" },
+  { value: "Специјални пратки", label: "Специјални пратки" },
+] as const;
+
+// Payment methods
+const PAYMENT_METHODS = [
+  { value: "П-Г", label: "Праќач-Граѓанин" },
+  { value: "П-П", label: "Праќач-Праќач" },
+  { value: "Г-Г", label: "Граѓанин-Граѓанин" },
+] as const;
 
 interface NewOrderFormProps {
   onOrderSubmit: (order: Order) => void;
@@ -31,8 +55,13 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
     street: "",
     city: "",
     phoneNumber: "",
-    totalPrice: "",
+    packageValue: "",
     notes: "",
+    shipmentType: "Пакети" as const,
+    shipmentTypeValue: "1",
+    shippingPaymentMethod: "П-Г" as const,
+    commissionPaymentMethod: "П-Г" as const,
+    numberPackages: "1",
   });
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [files, setFiles] = useState<File[]>([]);
@@ -41,6 +70,13 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -72,7 +108,6 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
     setAttachments((prev) => [...prev, ...newAttachments]);
     setFiles((prev) => [...prev, ...newFiles]);
 
-    // Reset the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -81,7 +116,6 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
   const removeAttachment = (id: string) => {
     setAttachments((prev) => {
       const filtered = prev.filter((attachment) => attachment.id !== id);
-      // Revoke object URLs to prevent memory leaks
       const removed = prev.find((attachment) => attachment.id === id);
       if (removed && removed.type === "image" && removed.url !== "#") {
         URL.revokeObjectURL(removed.url);
@@ -94,7 +128,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create new order object (no id, order_number will be assigned by backend)
+    // Create new order object
     const newOrder: Order = {
       customerName: formData.customerName,
       address: {
@@ -102,7 +136,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
         city: formData.city,
       },
       phoneNumber: formData.phoneNumber,
-      totalPrice: parseFloat(formData.totalPrice) || 0,
+      totalPrice: parseFloat(formData.packageValue) || 0,
       notes: formData.notes || undefined,
       timestamp: new Date().toISOString(),
       status: "New",
@@ -114,13 +148,65 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
       const { id: orderId, order_number } = await addOrder(newOrder, files);
       console.log("Order submitted successfully with ID:", orderId);
 
-      // Show success toast with the sequential order number
-      toast({
-        title: "Нарачката е успешно поднесена!",
-        description: `Нарачка #${order_number} е креирана.`,
-      });
+      // Create InPosta shipment
+      try {
+        console.log('Creating InPosta shipment with data:', {
+          shipment_type: formData.shipmentType,
+          shipment_type_value: formData.shipmentTypeValue,
+          receiver: {
+            name: formData.customerName,
+            city: formData.city,
+            phone_number: formData.phoneNumber,
+            address: formData.street,
+          },
+          package_value: parseFloat(formData.packageValue) || 0,
+          number_packages: parseInt(formData.numberPackages) || 1,
+          shipping_payment_method: formData.shippingPaymentMethod,
+          commission_payment_method: formData.commissionPaymentMethod,
+          order_number: order_number ? `#${order_number}` : undefined,
+          note: formData.notes || undefined,
+        });
 
-      // Also notify the parent component
+        const shipment = await inpostaService.createShipment({
+          shipment_type: formData.shipmentType,
+          shipment_type_value: formData.shipmentTypeValue,
+          receiver: {
+            name: formData.customerName,
+            city: formData.city,
+            phone_number: formData.phoneNumber,
+            address: formData.street,
+          },
+          package_value: parseFloat(formData.packageValue) || 0,
+          number_packages: parseInt(formData.numberPackages) || 1,
+          shipping_payment_method: formData.shippingPaymentMethod,
+          commission_payment_method: formData.commissionPaymentMethod,
+          order_number: order_number ? `#${order_number}` : undefined,
+          note: formData.notes || undefined,
+        });
+        
+        console.log('InPosta API Response:', shipment);
+        
+        // Show success toast with both order and shipment info
+        toast({
+          title: "Нарачката е успешно поднесена!",
+          description: `Нарачка #${order_number} е креирана. Пратка: ${shipment.shipment.reference}`,
+        });
+      } catch (inpostaError: any) {
+        console.error('Error creating InPosta shipment:', inpostaError);
+        console.error('Error details:', {
+          message: inpostaError.message,
+          response: inpostaError.response?.data,
+          status: inpostaError.response?.status,
+        });
+        
+        toast({
+          title: "InPosta: Грешка при креирање пратка",
+          description: inpostaError.response?.data?.message || inpostaError.message || "Пратката не е регистрирана во InPosta.",
+          variant: "destructive",
+        });
+      }
+
+      // Notify parent component
       onOrderSubmit({ ...newOrder, id: orderId, order_number });
 
       // Reset form
@@ -129,8 +215,13 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
         street: "",
         city: "",
         phoneNumber: "",
-        totalPrice: "",
+        packageValue: "",
         notes: "",
+        shipmentType: "Пакети",
+        shipmentTypeValue: "1",
+        shippingPaymentMethod: "П-Г",
+        commissionPaymentMethod: "П-Г",
+        numberPackages: "1",
       });
 
       // Clear attachments
@@ -210,16 +301,82 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="shipmentType">Тип на пратка</Label>
+                <Select
+                  value={formData.shipmentType}
+                  onValueChange={(value) => handleSelectChange("shipmentType", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Изберете тип на пратка" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SHIPMENT_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="shipmentTypeValue">Вредност на пратката</Label>
+                <Input
+                  id="shipmentTypeValue"
+                  name="shipmentTypeValue"
+                  value={formData.shipmentTypeValue}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="shippingPaymentMethod">Кој плаќа достава?</Label>
+                <Select
+                  value={formData.shippingPaymentMethod}
+                  onValueChange={(value) => handleSelectChange("shippingPaymentMethod", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Изберете начин на плаќање" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_METHODS.map((method) => (
+                      <SelectItem key={method.value} value={method.value}>
+                        {method.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numberPackages">Број на пакети</Label>
+                <Input
+                  id="numberPackages"
+                  name="numberPackages"
+                  type="number"
+                  min="1"
+                  value={formData.numberPackages}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="totalPrice">Цена (во денари)</Label>
+              <Label htmlFor="packageValue">Цена на пратка</Label>
               <Input
-                id="totalPrice"
-                name="totalPrice"
+                id="packageValue"
+                name="packageValue"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="1500"
-                value={formData.totalPrice}
+                value={formData.packageValue}
                 onChange={handleChange}
                 required
               />

@@ -4,16 +4,6 @@ import App from "./App.tsx";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 
-// Initialize TempoDevtools
-const initTempoDevtools = async () => {
-  try {
-    const { TempoDevtools } = await import("tempo-devtools");
-    TempoDevtools.init();
-  } catch (error) {
-    console.error("Failed to initialize TempoDevtools:", error);
-  }
-};
-
 // Initialize the app
 const initApp = () => {
   const rootElement = document.getElementById("root");
@@ -38,6 +28,11 @@ const initApp = () => {
 };
 
 // Start the app
-initTempoDevtools().then(() => {
-  initApp();
-});
+initApp();
+
+window.onerror = function (message, source, lineno, colno, error) {
+  document.body.innerHTML = '<pre style="color:red;white-space:pre-wrap;">' +
+    'JS Error: ' + message + '\\n' +
+    (error && error.stack ? error.stack : '') +
+    '</pre>';
+};

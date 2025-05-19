@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import {
-  useRoutes,
   Routes,
   Route,
   Navigate,
@@ -10,9 +9,8 @@ import Home from "./components/home";
 import NewOrderForm from "./components/NewOrderForm";
 import Navigation from "./components/Navigation";
 import CompletedOrders from "./components/CompletedOrders";
-import routes from "tempo-routes";
 import { useState } from "react";
-import { Order } from "./types/order";
+import { Order, OrderStatus } from "./types/order";
 
 function App() {
   const navigate = useNavigate();
@@ -26,7 +24,7 @@ function App() {
   };
 
   // Function to handle order status changes at the App level
-  const handleOrderStatusChange = (orderId: string, newStatus: string) => {
+  const handleOrderStatusChange = (orderId: string, newStatus: OrderStatus) => {
     if (newStatus === "Done") {
       // Move to completed orders
       setOrders((prevOrders) => {
@@ -36,7 +34,7 @@ function App() {
         );
 
         if (orderToMove) {
-          const completedOrder = { ...orderToMove, status: "Done" };
+          const completedOrder = { ...orderToMove, status: "Done" as OrderStatus };
           setCompletedOrders((prev) => [completedOrder, ...prev]);
         }
 
@@ -79,7 +77,6 @@ function App() {
             element={<CompletedOrders />}
           />
         </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
       </>
     </Suspense>
   );
