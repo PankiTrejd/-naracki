@@ -22,6 +22,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { OrderStatus } from "@/types/order";
 import { format } from "date-fns";
 import { mk } from "date-fns/locale";
+import { Attachment } from "@/types/order";
 
 interface OrderCardProps {
   id: string;
@@ -84,6 +85,8 @@ const OrderCard = ({
   // Helper to download all attachments
   const handleDownloadAll = () => {
     if (!attachments || attachments.length === 0) return;
+    
+    // Download each file separately
     attachments.forEach((attachment) => {
       const link = document.createElement('a');
       link.href = attachment.url;
@@ -93,6 +96,33 @@ const OrderCard = ({
       link.click();
       document.body.removeChild(link);
     });
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'dxf':
+        return <FileText className="h-8 w-8 text-blue-500" />;
+      case 'pdf':
+        return <FileText className="h-8 w-8 text-red-500" />;
+      case 'ai':
+        return <FileText className="h-8 w-8 text-orange-500" />;
+      case 'psd':
+        return <FileText className="h-8 w-8 text-blue-400" />;
+      case 'svg':
+        return <FileText className="h-8 w-8 text-green-500" />;
+      default:
+        return <FileText className="h-8 w-8 text-muted-foreground" />;
+    }
+  };
+
+  const handleFileClick = (attachment: Attachment) => {
+    if (attachment.type === "image") {
+      onViewMedia(attachment.id);
+    } else {
+      // For non-image files, open in new tab
+      window.open(attachment.url, '_blank');
+    }
   };
 
   console.log('OrderCard attachments:', attachments);
@@ -254,36 +284,23 @@ const OrderCard = ({
                       <div
                         key={attachment.id}
                         className="relative group cursor-pointer min-w-[96px]"
-                        onClick={() => onViewMedia(attachment.id)}
+                        onClick={() => handleFileClick(attachment)}
                       >
                         {attachment.type === "image" ? (
-                          <a
-                            href={attachment.url}
-                            download={attachment.name}
-                            className="block"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <div className="w-24 h-24 rounded-md overflow-hidden border border-border">
-                              <img
-                                src={attachment.url}
-                                alt={attachment.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </a>
+                          <div className="w-24 h-24 rounded-md overflow-hidden border border-border">
+                            <img
+                              src={attachment.url}
+                              alt={attachment.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         ) : (
-                          <a
-                            href={attachment.url}
-                            download={attachment.name}
-                            className="block"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <div className="w-24 h-24 rounded-md flex items-center justify-center bg-muted border border-border">
-                              <FileText className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          </a>
+                          <div className="w-24 h-24 rounded-md flex flex-col items-center justify-center bg-muted border border-border p-1">
+                            {getFileIcon(attachment.name)}
+                            <p className="text-xs text-center truncate w-full mt-1">
+                              {attachment.name}
+                            </p>
+                          </div>
                         )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                           <p className="text-white text-xs truncate max-w-[90%] px-1">
