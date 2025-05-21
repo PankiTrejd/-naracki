@@ -231,28 +231,28 @@ const OrderCard = ({
         <>
           <Separator />
           <CardContent className="p-2 sm:p-4 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
               <div>
-                <h4 className="font-medium mb-1 sm:mb-2 text-base sm:text-lg">Customer Information</h4>
-                <div className="space-y-1 sm:space-y-2">
+                <h4 className="font-bold mb-2 text-xl sm:text-2xl">Информации за нарачка</h4>
+                <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-start">
-                    <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
+                    <MapPin className="h-6 w-6 mr-3 mt-1 text-muted-foreground" />
                     <div>
-                      <p className="text-xs sm:text-sm">{address.street}</p>
-                      <p className="text-xs sm:text-sm">{address.city}</p>
+                      <p className="text-lg sm:text-xl font-semibold">{address.street}</p>
+                      <p className="text-lg sm:text-xl font-semibold">{address.city}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <p className="text-xs sm:text-sm">{phoneNumber}</p>
+                    <Phone className="h-6 w-6 mr-3 text-muted-foreground" />
+                    <p className="text-lg sm:text-xl font-semibold">{phoneNumber}</p>
                   </div>
                   <div className="flex items-center">
-                    <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <p className="text-xs sm:text-sm font-medium">
+                    <DollarSign className="h-6 w-6 mr-3 text-muted-foreground" />
+                    <p className="text-lg sm:text-xl font-bold text-green-700">
                       {totalPrice.toLocaleString("mk-MK", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      })}{" "}
+                      })} {" "}
                       ден.
                     </p>
                   </div>
@@ -261,10 +261,10 @@ const OrderCard = ({
 
               {notes && (
                 <div>
-                  <h4 className="font-medium mb-1 sm:mb-2 text-base sm:text-lg">Notes</h4>
+                  <h4 className="font-bold mb-2 text-xl sm:text-2xl">Забелешки</h4>
                   <div className="flex items-start">
-                    <FileText className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
-                    <p className="text-xs sm:text-sm">{notes}</p>
+                    <FileText className="h-6 w-6 mr-3 mt-1 text-muted-foreground" />
+                    <p className="text-lg sm:text-xl font-semibold">{notes}</p>
                   </div>
                 </div>
               )}
