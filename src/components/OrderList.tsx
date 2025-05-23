@@ -92,6 +92,7 @@ const OrderList = ({
                 isExpanded={expandedOrderId === order.id}
                 onToggleExpand={() => toggleOrderExpansion(order.id)}
                 onStatusChange={handleStatusChange}
+                trackingCode={order.trackingCode}
               />
             ))}
           </div>

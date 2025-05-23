@@ -8,6 +8,7 @@ import {
   FileText,
   Clock,
   CheckCircle,
+  Printer,
 } from "lucide-react";
 import {
   Card,
@@ -47,6 +48,7 @@ interface OrderCardProps {
   onToggleExpand?: () => void;
   onViewMedia?: (attachmentId: string) => void;
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
+  trackingCode?: string;
 }
 
 const OrderCard = ({
@@ -72,6 +74,7 @@ const OrderCard = ({
   onToggleExpand = () => {},
   onViewMedia = () => {},
   onStatusChange = () => {},
+  trackingCode,
 }: OrderCardProps) => {
   const [currentStatus, setCurrentStatus] = useState<OrderStatus>(
     status as OrderStatus,
@@ -124,6 +127,215 @@ const OrderCard = ({
       window.open(attachment.url, '_blank');
     }
   };
+
+  const handlePrint = () => {
+    // Use trackingCode (InPosta КОД) if available, otherwise show placeholder
+    const trackingNumber = trackingCode || 'Нема КОД';
+    const barcodeUrl = trackingCode
+      ? `https://bwipjs-api.metafloor.com/?bcid=code128&text=${trackingNumber}`
+      : '';
+
+    // Asset URLs (public folder)
+    const staticHeaderUrl = "/staticlabel.png";
+    const inpostaLogoUrl = "/inpostalogo.jpg";
+    const icon1Url = "/icon1.png";
+    const icon2Url = "/icon2.png";
+    const icon3Url = "/icon3.png";
+    const icon4Url = "/icon4.png";
+    const qrCodeUrl = "/QRCODE.png";
+    const skolaSansRegularWoff2 = '/SkolaSans.woff2';
+    const skolaSansRegularWoff = '/SkolaSans.woff';
+    const skolaSansBoldWoff2 = '/SkolaSans-Bold.woff2';
+    const skolaSansBoldWoff = '/SkolaSans-Bold.woff';
+
+    // Sender info (static for now)
+    const senderName = "CNC Decorates - Струмица";
+    const senderPhone = "078915725";
+    const senderAddress = "ул. 'Стево Филиповиќ' бр. 2/1-5, 1000 Скопје, Македонија";
+    const senderCompany = "ИН ПОШТА - сигурна пратка";
+    const senderCompanyInfo = "3 112 068 / 076 444 555 / 078 498 403";
+
+    // Print content
+    const content = `
+      <html>
+        <head>
+          <title>Пратка #${trackingNumber}</title>
+          <style>
+            /* IMPORTANT: In the print dialog, set margins to 'None' and uncheck 'Headers and footers' for best results */
+            @page { margin: 0; }
+            html, body {
+              font-family: Arial, sans-serif !important;
+              margin: 0;
+              padding: 0;
+              background: #fff;
+              width: 100vw;
+              height: 100vh;
+            }
+            .print-container {
+              max-width: 900px;
+              width: 100%;
+              margin: 0 auto;
+              height: auto;
+              max-height: 95vh;
+              overflow: hidden;
+              padding: 0;
+              page-break-inside: avoid;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: flex-start;
+            }
+            .static-header {
+              width: 100%;
+              max-width: 900px;
+              height: auto;
+              display: block;
+              margin: 0 auto 6px auto;
+            }
+            .main-label {
+              width: 100%;
+              max-width: 900px;
+              margin: 0 auto;
+              display: flex;
+              flex-direction: row;
+              margin-top: 6px;
+              page-break-inside: avoid;
+              font-size: 13px;
+            }
+            .label-left {
+              flex: 1;
+              padding: 2px 4px;
+              font-size: 13px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+            }
+            .barcode {
+              margin: 10px 0 0 0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+            }
+            .barcode img {
+              height: 70px;
+              width: 300px;
+              object-fit: contain;
+              margin-bottom: 6px;
+            }
+            .tracking-label {
+              font-size: 1.1em;
+              font-weight: bold;
+              margin-top: 8px;
+              letter-spacing: 1px;
+            }
+            .tracking-number {
+              font-size: 1.5em;
+              font-weight: bold;
+              margin-top: 2px;
+              letter-spacing: 2px;
+            }
+            .small { font-size: 0.85em; }
+            .label-center {
+              flex: 1.2;
+              padding: 2px 4px;
+              border-left: 1px solid #ccc;
+              border-right: 1px solid #ccc;
+              font-size: 13px;
+            }
+            .label-right {
+              flex: 1;
+              padding: 2px 4px;
+              font-size: 13px;
+            }
+            .label-right .bolded {
+              font-weight: bold;
+            }
+            .inposta-logo { height: 40px; margin-bottom: 8px; }
+            .underline { border-bottom: 1px solid #000; display: inline-block; min-width: 80px; }
+            .mt-2 { margin-top: 4px; }
+            .mb-2 { margin-bottom: 4px; }
+            h1, h2, h3, h4, h5, h6, b, strong {
+              font-family: Arial, sans-serif;
+              font-weight: 700;
+            }
+            @media print {
+              html, body { margin: 0; padding: 0; }
+              .print-container { box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            <img src="${staticHeaderUrl}" class="static-header" alt="Static Label Header" />
+            <!-- Dynamic Bottom Section -->
+            <div class="main-label">
+              <div class="label-left">
+                <img src="${inpostaLogoUrl}" class="inposta-logo" />
+                <div class="small">ИН ПОШТА - сигурна пратка<br>${senderAddress}<br>${senderCompanyInfo}</div>
+                <div class="barcode">
+                  ${barcodeUrl ? `<img src="${barcodeUrl}" alt="Barcode" />` : '<div style="color:red;">Нема баркод</div>'}
+                  <div class="tracking-label">КОД ЗА СЛЕДЕЊЕ</div>
+                  <div class="tracking-number">${trackingNumber}</div>
+                </div>
+              </div>
+              <div class="label-center">
+                <div><b>Испраќач:</b></div>
+                <div>Име: ${senderName}</div>
+                <div>Телефон: ${senderPhone}</div>
+                <div>Датум и време: ${format(new Date(timestamp), "dd/MM/yyyy - HH:mm", { locale: mk })}</div>
+                <div>Повратен док.: Не</div>
+                <div>Повратница: Не</div>
+                <div>Бр. на пакети: 1/1</div>
+                <div>Забелешка: ${notes || ''}</div>
+              </div>
+              <div class="label-right">
+                <div><span class="bolded">${address.city}</span></div>
+                <div>Примач: <span class="bolded">${customerName}</span></div>
+                <div>Адреса: ${address.street}</div>
+                <div>Град: <span class="bolded">${address.city}</span></div>
+                <div>Телефон: <span class="bolded">${phoneNumber}</span></div>
+                <div>Бр. на нарачка: #${order_number ? order_number.toString().padStart(2, '0') : '-'}</div>
+                <div>Откуп: ${totalPrice.toLocaleString("mk-MK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ден.</div>
+                <div>Поштарина: 150 ден. П-Г</div>
+                <div>Вкупно П-Г: 150 ден.</div>
+                <div class="small mt-2">Потврда од примач за извршена поштенска услуга<br />Потврдувам дека пратката е примена без никакви оштетувања и рекламации</div>
+                <div class="signature mt-2">Име и презиме <span class="underline"></span><br />Датум __ / __ / ____ год. час __ / __<br />Потпис <span class="underline"></span></div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Write the content to the new window
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.onload = function() {
+      // Wait for fonts to load before printing
+      if (printWindow.document.fonts && printWindow.document.fonts.ready) {
+        printWindow.document.fonts.ready.then(() => {
+          printWindow.print();
+          printWindow.onafterprint = function() {
+            printWindow.close();
+          };
+        });
+      } else {
+        printWindow.print();
+        printWindow.onafterprint = function() {
+          printWindow.close();
+        };
+      }
+    };
+  };
+
+  // Debug log for trackingCode
+  console.log('OrderCard trackingCode:', trackingCode, 'id:', id);
 
   console.log('OrderCard attachments:', attachments);
 
@@ -314,10 +526,24 @@ const OrderCard = ({
               </div>
             )}
           </CardContent>
-          <CardFooter className="p-2 sm:p-4 pt-0 flex justify-end">
+          <CardFooter className="p-2 sm:p-4 pt-0 flex justify-between items-center">
             <div className="flex space-x-2">
               <Badge variant="outline">{`Order #${order_number ?? id}`}</Badge>
             </div>
+            {currentStatus === "Done" && trackingCode && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={handlePrint}
+              >
+                <Printer className="h-4 w-4" />
+                Печати
+              </Button>
+            )}
+            {currentStatus === "Done" && !trackingCode && (
+              <span className="text-xs italic text-muted-foreground ml-2">Чекајте КОД од ИнПошта за печатење...</span>
+            )}
           </CardFooter>
         </>
       )}

@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { supabase } from "@/lib/supabase";
 
 // InPosta shipment types
 const SHIPMENT_TYPES = [
@@ -44,9 +45,10 @@ const PAYMENT_METHODS = [
 
 interface NewOrderFormProps {
   onOrderSubmit: (order: Order) => void;
+  onOrderRefresh?: () => void;
 }
 
-const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
+const NewOrderForm = ({ onOrderSubmit = () => {}, onOrderRefresh }: NewOrderFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,29 +146,13 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
     };
 
     try {
-      // Submit the order to Supabase
+      // 1. Add order to Supabase (without tracking code)
       const { id: orderId, order_number } = await addOrder(newOrder, files);
       console.log("Order submitted successfully with ID:", orderId);
 
-      // Create InPosta shipment
+      // 2. Create InPosta shipment
+      let trackingCode = undefined;
       try {
-        console.log('Creating InPosta shipment with data:', {
-          shipment_type: formData.shipmentType,
-          shipment_type_value: formData.shipmentTypeValue,
-          receiver: {
-            name: formData.customerName,
-            city: formData.city,
-            phone_number: formData.phoneNumber,
-            address: formData.street,
-          },
-          package_value: parseFloat(formData.packageValue) || 0,
-          number_packages: parseInt(formData.numberPackages) || 1,
-          shipping_payment_method: formData.shippingPaymentMethod,
-          commission_payment_method: formData.commissionPaymentMethod,
-          order_number: order_number ? `#${order_number}` : undefined,
-          note: formData.notes || undefined,
-        });
-
         const shipment = await inpostaService.createShipment({
           shipment_type: formData.shipmentType,
           shipment_type_value: formData.shipmentTypeValue,
@@ -183,22 +169,18 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
           order_number: order_number ? `#${order_number}` : undefined,
           note: formData.notes || undefined,
         });
-        
-        console.log('InPosta API Response:', shipment);
-        
-        // Show success toast with both order and shipment info
+        trackingCode = shipment.shipment.reference;
+        // Update the order in Supabase with the tracking code
+        await supabase
+          .from("orders")
+          .update({ tracking_code: trackingCode })
+          .eq("id", orderId);
         toast({
           title: "Нарачката е успешно поднесена!",
-          description: `Нарачка #${order_number} е креирана. Пратка: ${shipment.shipment.reference}`,
+          description: `Нарачка #${order_number} е креирана. Пратка: ${trackingCode}`,
         });
       } catch (inpostaError: any) {
         console.error('Error creating InPosta shipment:', inpostaError);
-        console.error('Error details:', {
-          message: inpostaError.message,
-          response: inpostaError.response?.data,
-          status: inpostaError.response?.status,
-        });
-        
         toast({
           title: "InPosta: Грешка при креирање пратка",
           description: inpostaError.response?.data?.message || inpostaError.message || "Пратката не е регистрирана во InPosta.",
@@ -206,8 +188,8 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
         });
       }
 
-      // Notify parent component
-      onOrderSubmit({ ...newOrder, id: orderId, order_number });
+      // Notify parent component with trackingCode
+      onOrderSubmit({ ...newOrder, id: orderId, order_number, trackingCode });
 
       // Reset form
       setFormData({
@@ -233,7 +215,8 @@ const NewOrderForm = ({ onOrderSubmit = () => {} }: NewOrderFormProps) => {
       setAttachments([]);
       setFiles([]);
 
-      // Navigate to dashboard
+      // Refresh orders before navigating
+      if (onOrderRefresh) await onOrderRefresh();
       navigate("/dashboard");
     } catch (error) {
       console.error("Error submitting order:", error);

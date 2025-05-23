@@ -5,7 +5,7 @@ import { Order, Attachment, OrderStatus } from "@/types/order";
 export const addOrder = async (
   order: Order,
   files: File[] = [],
-): Promise<{ id: string; order_number: number }> => {
+): Promise<{ id: string; order_number: number; trackingCode?: string }> => {
   try {
     // 1. Add order to Supabase (without attachments/files)
     const { data: orderData, error: orderError } = await supabase
@@ -19,6 +19,7 @@ export const addOrder = async (
         notes: order.notes,
         timestamp: new Date().toISOString(),
         status: order.status || "New",
+        tracking_code: order.trackingCode || null,
       })
       .select()
       .single();
@@ -29,6 +30,7 @@ export const addOrder = async (
 
     const realOrderId = orderData.id;
     const realOrderNumber = orderData.order_number;
+    const realTrackingCode = orderData.tracking_code;
 
     // 2. Upload files to Supabase Storage using the real order id
     const attachmentsWithUrls = await Promise.all(
@@ -79,8 +81,8 @@ export const addOrder = async (
       }
     }
 
-    // 4. Return both the real order id and order_number
-    return { id: realOrderId, order_number: realOrderNumber };
+    // 4. Return both the real order id, order_number, and trackingCode
+    return { id: realOrderId, order_number: realOrderNumber, trackingCode: realTrackingCode };
   } catch (error) {
     console.error("Error adding order: ", error);
     throw error;
@@ -102,23 +104,27 @@ export const getOrders = async (status?: OrderStatus): Promise<Order[]> => {
     console.log("Fetched orders from Supabase:", data);
 
     // Transform data to match Order type
-    let mapped = data.map((item) => ({
-      id: item.id,
-      order_number: item.order_number,
-      customerName: item.customer_name,
-      address: {
-        street: item.street,
-        city: item.city,
-      },
-      phoneNumber: item.phone_number,
-      totalPrice: item.total_price,
-      notes: item.notes,
-      timestamp: item.timestamp,
-      status: item.status as OrderStatus,
-      attachments: Array.isArray(item.attachments)
-        ? item.attachments
-        : JSON.parse(item.attachments ?? '[]'),
-    }));
+    let mapped = data.map((item) => {
+      console.log('Raw order item:', item);
+      return {
+        id: item.id,
+        order_number: item.order_number,
+        customerName: item.customer_name,
+        address: {
+          street: item.street,
+          city: item.city,
+        },
+        phoneNumber: item.phone_number,
+        totalPrice: item.total_price,
+        notes: item.notes,
+        timestamp: item.timestamp,
+        status: item.status as OrderStatus,
+        attachments: Array.isArray(item.attachments)
+          ? item.attachments
+          : JSON.parse(item.attachments ?? '[]'),
+        trackingCode: (typeof item.tracking_code === "string" && item.tracking_code.length > 0) ? item.tracking_code : undefined,
+      };
+    });
 
     // If status filter is provided, filter in JS
     if (status) {
@@ -185,4 +191,18 @@ export const subscribeToOrders = (
   return () => {
     subscription.unsubscribe();
   };
+};
+
+// Delete an order by ID
+export const deleteOrder = async (orderId: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error deleting order: ", error);
+    throw error;
+  }
 };

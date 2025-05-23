@@ -21,4 +21,5 @@ export interface Order {
   timestamp: string;
   attachments?: Attachment[];
   status?: OrderStatus;
+  trackingCode?: string;
 }

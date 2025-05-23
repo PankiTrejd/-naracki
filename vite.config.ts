@@ -22,9 +22,23 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api/v1': {
-        target: 'https://inpostaradeski.mk',
+        target: 'https://app.inpostaradeski.mk',
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path.replace(/^\/api\/v1/, '/api/v1'),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // Log the request
+            console.log('Proxying request:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            // Log the response
+            console.log('Received response:', proxyRes.statusCode, req.url);
+          });
+        },
       },
     },
   },

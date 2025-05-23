@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const INPOSTA_API_URL = 'https://inpostaradeski.mk/api/v1';
+const INPOSTA_API_URL = '/api/v1';
 const INPOSTA_TOKEN = 'SFMyNTY.g2gDYgAADTJuBgDed1PblgFiAAFRgA.xpXhTNFhpzhFGVH3yPxeB-t_EsQhZGbCCB8XOer99t4';
 
 // Types
@@ -59,13 +59,16 @@ export interface InpostaShipmentResponse {
 const inpostaClient = axios.create({
   baseURL: INPOSTA_API_URL,
   headers: {
-    'Authorization': `Bearer ${INPOSTA_TOKEN}`,
+    'Authorization': INPOSTA_TOKEN,
     'Content-Type': 'application/json',
   },
 });
 
 // Add request interceptor for debugging
 inpostaClient.interceptors.request.use(request => {
+  // Ensure Authorization header is set exactly as specified in the API docs
+  request.headers['Authorization'] = INPOSTA_TOKEN;
+  
   console.log('InPosta API Request:', {
     url: request.url,
     method: request.method,

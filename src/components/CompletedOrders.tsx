@@ -3,7 +3,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import OrderCard from "./OrderCard";
 import { Badge } from "@/components/ui/badge";
 import { Order } from "@/types/order";
-import { getOrders, subscribeToOrders } from "@/lib/orderService";
+import { getOrders, subscribeToOrders, deleteOrder } from "@/lib/orderService";
+import { X } from "lucide-react";
 
 interface CompletedOrdersProps {
   orders?: Order[];
@@ -56,6 +57,19 @@ const CompletedOrders = ({
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    alert("Clicked!");
+    if (!window.confirm("Дали сте сигурни дека сакате да ја избришете оваа нарачка?")) return;
+    try {
+      console.log("Deleting order with ID:", orderId);
+      await deleteOrder(orderId);
+      setOrders((prev) => prev.filter((order) => order.id !== orderId));
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Грешка при бришење на нарачката: " + (error?.message || error));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b sticky top-0 z-10 bg-background">
@@ -74,20 +88,22 @@ const CompletedOrders = ({
           {orders.length > 0 ? (
             <div className="space-y-4">
               {orders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  id={order.id}
-                  customerName={order.customerName}
-                  address={order.address}
-                  phoneNumber={order.phoneNumber}
-                  totalPrice={order.totalPrice}
-                  notes={order.notes}
-                  timestamp={order.timestamp}
-                  attachments={order.attachments}
-                  status={order.status}
-                  isExpanded={expandedOrderId === order.id}
-                  onToggleExpand={() => toggleOrderExpansion(order.id)}
-                />
+                <div key={order.id}>
+                  <OrderCard
+                    id={order.id}
+                    customerName={order.customerName}
+                    address={order.address}
+                    phoneNumber={order.phoneNumber}
+                    totalPrice={order.totalPrice}
+                    notes={order.notes}
+                    timestamp={order.timestamp}
+                    attachments={order.attachments}
+                    status={order.status}
+                    isExpanded={expandedOrderId === order.id}
+                    onToggleExpand={() => toggleOrderExpansion(order.id)}
+                    trackingCode={order.trackingCode}
+                  />
+                </div>
               ))}
             </div>
           ) : (

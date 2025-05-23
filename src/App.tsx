@@ -11,6 +11,8 @@ import Navigation from "./components/Navigation";
 import CompletedOrders from "./components/CompletedOrders";
 import { useState } from "react";
 import { Order, OrderStatus } from "./types/order";
+import Dashboard from "./components/Dashboard";
+import { getOrders } from "./lib/orderService";
 
 function App() {
   const navigate = useNavigate();
@@ -18,9 +20,10 @@ function App() {
   const [completedOrders, setCompletedOrders] = useState<Order[]>([]);
   const [newOrderCount, setNewOrderCount] = useState<number>(0);
 
-  const handleOrderSubmit = (newOrder: Order) => {
-    setOrders((prevOrders) => [newOrder, ...prevOrders]);
-    setNewOrderCount((prev) => prev + 1);
+  // Add this function to refresh orders
+  const handleOrderRefresh = async () => {
+    const fetchedOrders = await getOrders();
+    setOrders(fetchedOrders.filter(order => order.status !== "Done"));
   };
 
   // Function to handle order status changes at the App level
@@ -53,6 +56,11 @@ function App() {
     navigate(path);
   };
 
+  const handleOrderSubmit = (newOrder: Order) => {
+    // Optionally, you can refresh orders here or just rely on handleOrderRefresh
+    handleOrderRefresh();
+  };
+
   return (
     <Suspense fallback={<p>Loading...</p>}>
       <>
@@ -61,6 +69,10 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route
             path="/dashboard"
+            element={<Dashboard />}
+          />
+          <Route
+            path="/orders"
             element={
               <Home
                 externalOrders={orders}
@@ -70,7 +82,7 @@ function App() {
           />
           <Route
             path="/new-order"
-            element={<NewOrderForm onOrderSubmit={handleOrderSubmit} />}
+            element={<NewOrderForm onOrderSubmit={handleOrderSubmit} onOrderRefresh={handleOrderRefresh} />}
           />
           <Route
             path="/completed"

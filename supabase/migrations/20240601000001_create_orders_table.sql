@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS orders (
   total_price DECIMAL(10, 2) NOT NULL,
   notes TEXT,
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  status TEXT DEFAULT 'New'
+  status TEXT DEFAULT 'New',
+  tracking_code TEXT
 );
 
 -- Create attachments table with reference to orders

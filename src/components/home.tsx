@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Bell, RefreshCw } from "lucide-react";
+import { Bell, RefreshCw, PlusCircle, LayoutDashboard, CheckCircle, List } from "lucide-react";
 import OrderList from "./OrderList";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
