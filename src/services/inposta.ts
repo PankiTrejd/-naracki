@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const INPOSTA_API_URL = '/api/v1';
+const INPOSTA_API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://app.inpostaradeski.mk/api/v1'
+  : '/api/v1';
 const INPOSTA_TOKEN = 'SFMyNTY.g2gDYgAADTJuBgDed1PblgFiAAFRgA.xpXhTNFhpzhFGVH3yPxeB-t_EsQhZGbCCB8XOer99t4';
 
 // Types
