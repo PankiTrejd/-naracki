@@ -130,7 +130,37 @@ const NewOrderForm = ({ onOrderSubmit = () => {}, onOrderRefresh }: NewOrderForm
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create new order object
+    // 1. Try to create InPosta shipment first
+    let trackingCode;
+    let shipment;
+    try {
+      shipment = await inpostaService.createShipment({
+        shipment_type: formData.shipmentType,
+        shipment_type_value: formData.shipmentTypeValue,
+        receiver: {
+          name: formData.customerName,
+          city: formData.city,
+          phone_number: formData.phoneNumber,
+          address: formData.street,
+        },
+        package_value: parseFloat(formData.packageValue) || 0,
+        number_packages: parseInt(formData.numberPackages) || 1,
+        shipping_payment_method: formData.shippingPaymentMethod,
+        commission_payment_method: formData.commissionPaymentMethod,
+        note: formData.notes || undefined,
+      });
+      trackingCode = shipment.shipment.reference;
+    } catch (inpostaError: any) {
+      console.error('Error creating InPosta shipment:', inpostaError);
+      toast({
+        title: "InPosta: Грешка при креирање пратка",
+        description: inpostaError.response?.data?.message || inpostaError.message || "Пратката не е регистрирана во InPosta.",
+        variant: "destructive",
+      });
+      return; // Stop here if shipment fails
+    }
+
+    // 2. Create new order object with tracking code
     const newOrder: Order = {
       customerName: formData.customerName,
       address: {
@@ -143,55 +173,22 @@ const NewOrderForm = ({ onOrderSubmit = () => {}, onOrderRefresh }: NewOrderForm
       timestamp: new Date().toISOString(),
       status: "New",
       attachments: attachments.length > 0 ? attachments : undefined,
+      trackingCode, // Save tracking code immediately
     };
 
     try {
-      // 1. Add order to Supabase (without tracking code)
+      // 3. Add order to Supabase (with tracking code)
       const { id: orderId, order_number } = await addOrder(newOrder, files);
-      console.log("Order submitted successfully with ID:", orderId);
 
-      // 2. Create InPosta shipment
-      let trackingCode = undefined;
-      try {
-        const shipment = await inpostaService.createShipment({
-          shipment_type: formData.shipmentType,
-          shipment_type_value: formData.shipmentTypeValue,
-          receiver: {
-            name: formData.customerName,
-            city: formData.city,
-            phone_number: formData.phoneNumber,
-            address: formData.street,
-          },
-          package_value: parseFloat(formData.packageValue) || 0,
-          number_packages: parseInt(formData.numberPackages) || 1,
-          shipping_payment_method: formData.shippingPaymentMethod,
-          commission_payment_method: formData.commissionPaymentMethod,
-          order_number: order_number ? `#${order_number}` : undefined,
-          note: formData.notes || undefined,
-        });
-        trackingCode = shipment.shipment.reference;
-        // Update the order in Supabase with the tracking code
-        await supabase
-          .from("orders")
-          .update({ tracking_code: trackingCode })
-          .eq("id", orderId);
-        toast({
-          title: "Нарачката е успешно поднесена!",
-          description: `Нарачка #${order_number} е креирана. Пратка: ${trackingCode}`,
-        });
-      } catch (inpostaError: any) {
-        console.error('Error creating InPosta shipment:', inpostaError);
-        toast({
-          title: "InPosta: Грешка при креирање пратка",
-          description: inpostaError.response?.data?.message || inpostaError.message || "Пратката не е регистрирана во InPosta.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Нарачката е успешно поднесена!",
+        description: `Нарачка #${order_number} е креирана. Пратка: ${trackingCode}`,
+      });
 
       // Notify parent component with trackingCode
       onOrderSubmit({ ...newOrder, id: orderId, order_number, trackingCode });
 
-      // Reset form
+      // Reset form, clear attachments, refresh, etc...
       setFormData({
         customerName: "",
         street: "",
