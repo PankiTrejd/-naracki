@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Add any required auth headers here, e.g. 'Authorization': 'Bearer ...'
+        'Authorization': 'SFMyNTY.g2gDYgAADTJuBgDed1PblgFiAAFRgA.xpXhTNFhpzhFGVH3yPxeB-t_EsQhZGbCCB8XOer99t4',
       },
       body: JSON.stringify(req.body),
     });
