@@ -103,8 +103,19 @@ inpostaClient.interceptors.response.use(
 export const inpostaService = {
   // Create a single shipment
   createShipment: async (shipment: InpostaShipment): Promise<InpostaShipmentResponse> => {
-    const response = await inpostaClient.post('/shipments', shipment);
-    return response.data;
+    // Use the Vercel serverless proxy endpoint
+    const response = await fetch('/api/inposta-shipment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(shipment),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to create shipment');
+    }
+    return await response.json();
   },
 
   // Create multiple shipments
