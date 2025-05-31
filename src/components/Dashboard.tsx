@@ -10,6 +10,7 @@ import ExpensesSection from "./ExpensesSection";
 import { addExpense } from "@/lib/expenseService";
 import DateRangeSelector, { DateRange } from "./DateRangeSelector";
 import GoalTracker from "./GoalTracker";
+import { Users, TrendingUp, TrendingDown, Percent } from "lucide-react";
 
 const Dashboard = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -35,7 +36,6 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -57,7 +57,6 @@ const Dashboard = () => {
     const orderDate = parseISO(order.timestamp);
     return isWithinInterval(orderDate, { start: dateRange.from, end: dateRange.to });
   });
-
   const filteredExpenses = expenses.filter(expense => {
     const expenseDate = parseISO(expense.timestamp);
     return isWithinInterval(expenseDate, { start: dateRange.from, end: dateRange.to });
@@ -85,46 +84,46 @@ const Dashboard = () => {
   });
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-8 text-center text-lg">Loading...</div>;
+    return <div className="container mx-auto px-2 py-8 text-center text-lg">Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Контролен</h2>
+    <div className="container mx-auto px-2 py-4 w-full max-w-xl">
+      <h2 className="text-3xl font-bold text-center mb-2">Контролен</h2>
+      <div className="mb-2">
         <DateRangeSelector onRangeChange={handleDateRangeChange} />
       </div>
-
-      {/* Top stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card className="p-6 flex flex-col gap-2">
-          <h3 className="text-lg font-semibold mb-2">Избрани датуми</h3>
-          <div className="flex justify-between text-2xl font-bold">
-            <div>Нарачки: <span className="text-blue-600">{orderCount}</span></div>
-            <div>Приход: <span className="text-green-600">{totalRevenue.toLocaleString()} ден.</span></div>
+      {/* Compact stats card */}
+      <Card className="mb-3 p-3 rounded-lg">
+        <div className="grid grid-cols-2 gap-2 text-center">
+          <div>
+            <div className="flex justify-center items-center gap-1 text-muted-foreground text-xs mb-1"><Users className="h-4 w-4" />Нарачки</div>
+            <div className="text-xl font-bold text-blue-600">{orderCount}</div>
           </div>
-        </Card>
-        <Card className="p-6 flex flex-col gap-2">
-          <h3 className="text-lg font-semibold mb-2">Детали</h3>
-          <div className="grid grid-cols-2 gap-4 text-lg">
-            <div>Вкупно нарачки: <span className="font-bold text-blue-600">{orderCount}</span></div>
-            <div>Вкупен приход: <span className="font-bold text-green-600">{totalRevenue.toLocaleString()} ден.</span></div>
-            <div>Потрошено: <span className="font-bold text-red-600">{totalExpenses.toLocaleString()} ден.</span></div>
-            <div>Просечна нарачка: <span className="font-bold text-purple-600">{avgOrder.toLocaleString(undefined, { maximumFractionDigits: 2 })} ден.</span></div>
+          <div>
+            <div className="flex justify-center items-center gap-1 text-muted-foreground text-xs mb-1"><TrendingUp className="h-4 w-4" />Приход</div>
+            <div className="text-xl font-bold text-green-600">{totalRevenue.toLocaleString()} ден.</div>
           </div>
-        </Card>
-      </div>
-
+          <div>
+            <div className="flex justify-center items-center gap-1 text-muted-foreground text-xs mb-1"><TrendingDown className="h-4 w-4" />Потрошено</div>
+            <div className="text-xl font-bold text-red-600">{totalExpenses.toLocaleString()} ден.</div>
+          </div>
+          <div>
+            <div className="flex justify-center items-center gap-1 text-muted-foreground text-xs mb-1"><Percent className="h-4 w-4" />Просечна</div>
+            <div className="text-xl font-bold text-purple-600">{avgOrder.toLocaleString(undefined, { maximumFractionDigits: 2 })} ден.</div>
+          </div>
+        </div>
+      </Card>
       {/* Expenses Section */}
-      <div className="mb-6">
-        <ExpensesSection expenses={filteredExpenses} onAddExpense={handleAddExpense} />
+      <div className="mb-3">
+        <ExpensesSection expenses={filteredExpenses} onAddExpense={handleAddExpense} compact />
       </div>
-
+      <hr className="my-3 border-muted-foreground/20" />
       {/* Line chart */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3">Нарачки по ден</h3>
-        <Card className="p-4">
-          <ResponsiveContainer width="100%" height={300}>
+      <div className="mb-3">
+        <h3 className="text-lg font-semibold mb-2 text-center">Нарачки по ден</h3>
+        <Card className="p-2">
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={ordersPerDay} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
@@ -135,6 +134,7 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </Card>
       </div>
+      <hr className="my-3 border-muted-foreground/20" />
       <GoalTracker />
     </div>
   );
