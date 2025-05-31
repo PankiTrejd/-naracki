@@ -22,6 +22,16 @@ interface DateRangeSelectorProps {
   className?: string;
 }
 
+const presets = [
+  { key: "today", label: "Денес" },
+  { key: "yesterday", label: "Вчера" },
+  { key: "last7days", label: "Последни 7 Дена" },
+  { key: "last30days", label: "Последни 30 Дена" },
+  { key: "thisMonth", label: "Овој Месец" },
+  { key: "lastMonth", label: "Претходен Месец" },
+  { key: "thisYear", label: "Оваа Година" },
+];
+
 const DateRangeSelector = ({ onRangeChange, className }: DateRangeSelectorProps) => {
   const [date, setDate] = useState<DateRange>({
     from: new Date(),
@@ -77,95 +87,77 @@ const DateRangeSelector = ({ onRangeChange, className }: DateRangeSelectorProps)
     }
   };
 
+  // Helper to check if a preset is active
+  const isPresetActive = (key: string) => {
+    const today = new Date();
+    switch (key) {
+      case "today":
+        return date.from.getTime() === date.to.getTime() && date.from.getTime() === today.getTime();
+      case "yesterday":
+        return date.from.getTime() === date.to.getTime() && date.from.getTime() === subDays(today, 1).getTime();
+      case "last7days":
+        return date.from.getTime() === subDays(today, 6).getTime() && date.to.getTime() === today.getTime();
+      case "last30days":
+        return date.from.getTime() === subDays(today, 29).getTime() && date.to.getTime() === today.getTime();
+      case "thisMonth":
+        return date.from.getTime() === startOfMonth(today).getTime() && date.to.getTime() === endOfMonth(today).getTime();
+      case "lastMonth":
+        return date.from.getTime() === startOfMonth(subMonths(today, 1)).getTime() && date.to.getTime() === endOfMonth(subMonths(today, 1)).getTime();
+      case "thisYear":
+        return date.from.getTime() === startOfYear(today).getTime() && date.to.getTime() === endOfYear(today).getTime();
+      default:
+        return false;
+    }
+  };
+
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
-      <Button
-        variant={date.from.getTime() === date.to.getTime() && date.from.getTime() === new Date().getTime() ? "default" : "outline"}
-        size="sm"
-        onClick={() => handlePresetSelect("today")}
-      >
-        Денес
-      </Button>
-      <Button
-        variant={date.from.getTime() === date.to.getTime() && date.from.getTime() === subDays(new Date(), 1).getTime() ? "default" : "outline"}
-        size="sm"
-        onClick={() => handlePresetSelect("yesterday")}
-      >
-        Вчера
-      </Button>
-      <Button
-        variant={date.from.getTime() === subDays(new Date(), 6).getTime() && date.to.getTime() === new Date().getTime() ? "default" : "outline"}
-        size="sm"
-        onClick={() => handlePresetSelect("last7days")}
-      >
-        Последни 7 Дена
-      </Button>
-      <Button
-        variant={date.from.getTime() === subDays(new Date(), 29).getTime() && date.to.getTime() === new Date().getTime() ? "default" : "outline"}
-        size="sm"
-        onClick={() => handlePresetSelect("last30days")}
-      >
-        Последни 30 Дена
-      </Button>
-      <Button
-        variant={date.from.getTime() === startOfMonth(new Date()).getTime() && date.to.getTime() === endOfMonth(new Date()).getTime() ? "default" : "outline"}
-        size="sm"
-        onClick={() => handlePresetSelect("thisMonth")}
-      >
-        Овој Месец
-      </Button>
-      <Button
-        variant={date.from.getTime() === startOfMonth(subMonths(new Date(), 1)).getTime() && date.to.getTime() === endOfMonth(subMonths(new Date(), 1)).getTime() ? "default" : "outline"}
-        size="sm"
-        onClick={() => handlePresetSelect("lastMonth")}
-      >
-        Претходен Месец
-      </Button>
-      <Button
-        variant={date.from.getTime() === startOfYear(new Date()).getTime() && date.to.getTime() === endOfYear(new Date()).getTime() ? "default" : "outline"}
-        size="sm"
-        onClick={() => handlePresetSelect("thisYear")}
-      >
-        Оваа Година
-      </Button>
-      <Popover open={isCustomRangeOpen} onOpenChange={setIsCustomRangeOpen}>
-        <PopoverTrigger asChild>
+    <div className={cn("w-full", className)}>
+      <div className="mb-2 text-sm font-semibold text-muted-foreground">Филтрирај по датум</div>
+      {/* Horizontal scrollable row on mobile, row/grid on desktop */}
+      <div className="flex overflow-x-auto gap-2 pb-2 -mx-2 px-2 md:grid md:grid-cols-4 md:overflow-visible md:gap-3 md:px-0">
+        {presets.map((preset) => (
           <Button
-            variant={!Object.values({
-              today: date.from.getTime() === date.to.getTime() && date.from.getTime() === new Date().getTime(),
-              yesterday: date.from.getTime() === date.to.getTime() && date.from.getTime() === subDays(new Date(), 1).getTime(),
-              last7days: date.from.getTime() === subDays(new Date(), 6).getTime() && date.to.getTime() === new Date().getTime(),
-              last30days: date.from.getTime() === subDays(new Date(), 29).getTime() && date.to.getTime() === new Date().getTime(),
-              thisMonth: date.from.getTime() === startOfMonth(new Date()).getTime() && date.to.getTime() === endOfMonth(new Date()).getTime(),
-              lastMonth: date.from.getTime() === startOfMonth(subMonths(new Date(), 1)).getTime() && date.to.getTime() === endOfMonth(subMonths(new Date(), 1)).getTime(),
-              thisYear: date.from.getTime() === startOfYear(new Date()).getTime() && date.to.getTime() === endOfYear(new Date()).getTime(),
-            }).some(Boolean) ? "default" : "outline"}
+            key={preset.key}
+            variant={isPresetActive(preset.key) ? "default" : "outline"}
             size="sm"
-            className="flex items-center gap-2"
+            className="whitespace-nowrap flex-shrink-0"
+            onClick={() => handlePresetSelect(preset.key)}
           >
-            <CalendarIcon className="h-4 w-4" />
-            {date.from && date.to ? (
-              <>
-                {format(date.from, "dd MMM yyyy", { locale: mk })} -{" "}
-                {format(date.to, "dd MMM yyyy", { locale: mk })}
-              </>
-            ) : (
-              "Избери датуми"
-            )}
+            {preset.label}
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={date.from}
-            selected={date}
-            onSelect={handleCustomRangeSelect}
-            numberOfMonths={2}
-            locale={mk}
-          />
-        </PopoverContent>
-      </Popover>
+        ))}
+        {/* Custom date picker button at the end */}
+        <Popover open={isCustomRangeOpen} onOpenChange={setIsCustomRangeOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant={presets.every(p => !isPresetActive(p.key)) ? "default" : "outline"}
+              size="sm"
+              className="flex items-center gap-2 flex-shrink-0"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              {date.from && date.to ? (
+                <>
+                  {format(date.from, "dd MMM yyyy", { locale: mk })} -{" "}
+                  {format(date.to, "dd MMM yyyy", { locale: mk })}
+                </>
+              ) : (
+                "Избери датуми"
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date.from}
+              selected={date}
+              onSelect={handleCustomRangeSelect}
+              numberOfMonths={2}
+              locale={mk}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
     </div>
   );
 };

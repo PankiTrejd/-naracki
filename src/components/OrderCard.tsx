@@ -340,21 +340,14 @@ const OrderCard = ({
   console.log('OrderCard attachments:', attachments);
 
   return (
-    <Card className="w-full mb-4 bg-white border-l-4 border-l-primary hover:shadow-md transition-shadow">
+    <Card className="w-full mb-4 bg-white border-l-4 border-l-primary hover:shadow-md transition-shadow rounded-lg p-2 sm:p-4">
       {/* Collapsed View */}
       <CardHeader className="p-2 sm:p-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-          <div
-            className="flex items-center space-x-2 sm:space-x-4 cursor-pointer"
-            onClick={onToggleExpand}
-          >
+          <div className="flex items-center space-x-2 sm:space-x-4 cursor-pointer" onClick={onToggleExpand}>
             <div>
               <div className="flex items-center gap-1 sm:gap-2">
-                <h3
-                  className={`text-base sm:text-lg font-semibold ${currentStatus === "Done" ? "line-through text-muted-foreground" : ""}`}
-                >
-                  {customerName}
-                </h3>
+                <h3 className={`text-base sm:text-lg font-semibold ${currentStatus === "Done" ? "line-through text-muted-foreground" : ""}`}>{customerName}</h3>
                 <Badge
                   variant={
                     currentStatus === "New"
@@ -372,41 +365,30 @@ const OrderCard = ({
                 >
                   {currentStatus === "New" && "Нова"}
                   {currentStatus === "Accepted" && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> Примена
-                    </span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Примена</span>
                   )}
                   {currentStatus === "Done" && (
-                    <span className="flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3" /> Готова
-                    </span>
+                    <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Готова</span>
                   )}
                 </Badge>
               </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {format(new Date(timestamp), "MMMM d - EEEE", { locale: mk })}
-              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{format(new Date(timestamp), "MMMM d - EEEE", { locale: mk })}</p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 w-full sm:w-auto">
             <div className="text-right mr-0 sm:mr-2">
-              <span
-                className={`font-bold ${currentStatus === "Accepted" ? "text-lg sm:text-2xl" : "text-base sm:text-lg"}`}
-              >
-                {totalPrice.toLocaleString("mk-MK", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })} {" "}
-                ден.
+              <span className={`font-bold ${currentStatus === "Accepted" ? "text-lg sm:text-2xl" : "text-base sm:text-lg"}`}>
+                {totalPrice.toLocaleString("mk-MK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ден.
               </span>
             </div>
+            {/* Action buttons: always show, full width on mobile */}
             {currentStatus !== "Done" && (
-              <div className="flex flex-row gap-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 {currentStatus !== "Accepted" && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-yellow-500 text-yellow-700 hover:bg-yellow-50 px-2 py-1 w-1/2 sm:w-auto"
+                    className="border-yellow-500 text-yellow-700 hover:bg-yellow-50 px-2 py-1 w-full sm:w-auto"
                     onClick={() => handleStatusChange("Accepted")}
                   >
                     Прими
@@ -428,18 +410,14 @@ const OrderCard = ({
               className="p-0 h-8 w-8 self-end sm:self-auto"
               onClick={onToggleExpand}
             >
-              {isExpanded ? (
-                <ChevronUp className="h-5 w-5" />
-              ) : (
-                <ChevronDown className="h-5 w-5" />
-              )}
+              {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </Button>
           </div>
         </div>
       </CardHeader>
 
-      {/* Expanded View */}
-      {isExpanded && (
+      {/* Show details only if status is Accepted */}
+      {currentStatus === "Accepted" && (
         <>
           <Separator />
           <CardContent className="p-2 sm:p-4 pt-2">
@@ -461,16 +439,11 @@ const OrderCard = ({
                   <div className="flex items-center">
                     <DollarSign className="h-6 w-6 mr-3 text-muted-foreground" />
                     <p className="text-lg sm:text-xl font-bold text-green-700">
-                      {totalPrice.toLocaleString("mk-MK", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })} {" "}
-                      ден.
+                      {totalPrice.toLocaleString("mk-MK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ден.
                     </p>
                   </div>
                 </div>
               </div>
-
               {notes && (
                 <div>
                   <h4 className="font-bold mb-2 text-xl sm:text-2xl">Забелешки</h4>
@@ -481,7 +454,6 @@ const OrderCard = ({
                 </div>
               )}
             </div>
-
             {attachments && attachments.length > 0 && (
               <div className="mt-2 sm:mt-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 gap-2 sm:gap-4">
