@@ -113,14 +113,14 @@ const DateRangeSelector = ({ onRangeChange, className }: DateRangeSelectorProps)
   return (
     <div className={cn("w-full", className)}>
       <div className="mb-2 text-sm font-semibold text-muted-foreground">Филтрирај по датум</div>
-      {/* Horizontal scrollable row on mobile, row/grid on desktop */}
-      <div className="flex overflow-x-auto gap-2 pb-2 -mx-2 px-2 md:grid md:grid-cols-4 md:overflow-visible md:gap-3 md:px-0">
+      {/* Wrap filter buttons on mobile, grid on desktop */}
+      <div className="flex flex-wrap gap-2 pb-2 md:grid md:grid-cols-4 md:overflow-visible md:gap-3">
         {presets.map((preset) => (
           <Button
             key={preset.key}
             variant={isPresetActive(preset.key) ? "default" : "outline"}
             size="sm"
-            className="whitespace-nowrap flex-shrink-0"
+            className="whitespace-nowrap"
             onClick={() => handlePresetSelect(preset.key)}
           >
             {preset.label}
@@ -132,7 +132,7 @@ const DateRangeSelector = ({ onRangeChange, className }: DateRangeSelectorProps)
             <Button
               variant={presets.every(p => !isPresetActive(p.key)) ? "default" : "outline"}
               size="sm"
-              className="flex items-center gap-2 flex-shrink-0"
+              className="flex items-center gap-2"
             >
               <CalendarIcon className="h-4 w-4" />
               {date.from && date.to ? (
