@@ -88,7 +88,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-2 py-4 w-full max-w-xl">
+    <div className="container mx-auto px-2 py-4 w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-7xl">
       <h2 className="text-3xl font-bold text-center mb-2">Контролен</h2>
       <div className="mb-2">
         <DateRangeSelector onRangeChange={handleDateRangeChange} />

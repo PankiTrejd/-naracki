@@ -416,8 +416,8 @@ const OrderCard = ({
         </div>
       </CardHeader>
 
-      {/* Show details only if expanded AND status is Accepted */}
-      {isExpanded && currentStatus === "Accepted" && (
+      {/* Show details only if expanded */}
+      {isExpanded && (
         <>
           <Separator />
           <CardContent className="p-2 sm:p-4 pt-2">
