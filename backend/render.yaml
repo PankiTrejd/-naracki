@@ -6,7 +6,7 @@ services:
     startCommand: node dist/server.js
     envVars:
       - key: PORT
-        value: 3001
+        value: 10000
       - key: DATABASE_HOST
         sync: false
       - key: DATABASE_PORT
