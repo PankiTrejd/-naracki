@@ -16,7 +16,7 @@ export const getExpenses = async (): Promise<Expense[]> => {
   }
 };
 
-export const addExpense = async (expenseData: Expense) => {
+export const addExpense = async (expenseData: Omit<Expense, "id" | "timestamp">) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/api/expenses`, { ...expenseData, amount: parseFloat(String(expenseData.amount)) });
     return { ...response.data, amount: parseFloat(response.data.amount || '0') };
