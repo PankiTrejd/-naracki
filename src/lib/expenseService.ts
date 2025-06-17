@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Expense } from '../types/expense';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 export const getExpenses = async (): Promise<Expense[]> => {
   try {

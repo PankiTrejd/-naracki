@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Order, Attachment, OrderStatus } from "@/types/order";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Add a new order
 export const addOrder = async (
