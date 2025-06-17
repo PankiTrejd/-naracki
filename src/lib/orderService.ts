@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Order, Attachment, OrderStatus } from "@/types/order";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Add a new order
 export const addOrder = async (
@@ -25,7 +25,7 @@ export const addOrder = async (
       };
     }));
 
-    const response = await axios.post(`${API_BASE_URL}/orders`, { order, files: filesData });
+    const response = await axios.post(`${API_BASE_URL}/api/orders`, { order, files: filesData });
     return response.data;
   } catch (error: any) {
     console.error("Error adding order:", error.response?.data?.message || error.message || error);
@@ -36,7 +36,7 @@ export const addOrder = async (
 // Get all orders
 export const getOrders = async (status?: OrderStatus): Promise<Order[]> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/orders`, {
+    const response = await axios.get(`${API_BASE_URL}/api/orders`, {
       params: { status },
     });
     return response.data;

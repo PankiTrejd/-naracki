@@ -1,39 +1,34 @@
-import { Expense } from "@/types/expense";
 import axios from 'axios';
+import { Expense } from '../types/expense';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const getExpenses = async (): Promise<Expense[]> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/expenses`);
-    return response.data.map((expense: any) => ({
-      ...expense,
-      amount: parseFloat(expense.amount || '0'),
-    })) || [];
-  } catch (error: any) {
-    console.error("Error fetching expenses:", error.response?.data?.message || error.message || error);
+    const response = await axios.get(`${API_BASE_URL}/api/expenses`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching expenses:', error);
     throw error;
   }
 };
 
-export const addExpense = async (expense: Omit<Expense, "id" | "timestamp">): Promise<Expense> => {
+export const addExpense = async (expenseData: Expense) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/expenses`, expense);
-    return {
-      ...response.data,
-      amount: parseFloat(response.data.amount || '0'),
-    };
-  } catch (error: any) {
-    console.error("Error adding expense:", error.response?.data?.message || error.message || error);
-    throw error;
+    const response = await axios.post(`${API_BASE_URL}/api/expenses`, expenseData);
+    return response.data; 
+  } catch (error) {
+    console.error('Error adding expense:', error);
+    throw error; 
   }
 };
 
-export const deleteExpense = async (id: string): Promise<void> => {
+export const deleteExpense = async (id: string) => {
   try {
-    await axios.delete(`${API_BASE_URL}/expenses/${id}`);
-  } catch (error: any) {
-    console.error("Error deleting expense:", error.response?.data?.message || error.message || error);
-    throw error;
+    const response = await axios.delete(`${API_BASE_URL}/api/expenses/${id}`);
+    return response.data; 
+  } catch (error) {
+    console.error('Error deleting expense:', error);
+    throw error; 
   }
 }; 
