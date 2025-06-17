@@ -1,4 +1,6 @@
-import { supabase } from "./supabase";
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3001/api';
 
 export interface Goal {
   id: string;
@@ -9,35 +11,31 @@ export interface Goal {
 }
 
 export const getGoal = async (): Promise<Goal | null> => {
-  const { data, error } = await supabase
-    .from("goal_tracker")
-    .select("*")
-    .single();
-  if (error) {
-    console.error("Error fetching goal:", error);
+  try {
+    const response = await axios.get(`${API_BASE_URL}/goals`);
+    return response.data || null;
+  } catch (error: any) {
+    console.error("Error fetching goal:", error.response?.data?.message || error.message || error);
     return null;
   }
-  return data;
 };
 
 export const updateGoal = async (goal: Partial<Goal> & { id: string }): Promise<Goal | null> => {
-  const { data, error } = await supabase
-    .from("goal_tracker")
-    .update(goal)
-    .eq("id", goal.id)
-    .select()
-    .single();
-  if (error) {
-    console.error("Error updating goal:", error);
+  try {
+    const response = await axios.put(`${API_BASE_URL}/goals/${goal.id}`, goal);
+    return response.data || null;
+  } catch (error: any) {
+    console.error("Error updating goal:", error.response?.data?.message || error.message || error);
     return null;
   }
-  return data;
 };
 
 export const addToGoal = async (id: string, amount: number): Promise<Goal | null> => {
-  // Fetch current goal
-  const goal = await getGoal();
-  if (!goal) return null;
-  const newAmount = goal.current_amount + amount;
-  return updateGoal({ id, current_amount: newAmount });
+  try {
+    const response = await axios.post(`${API_BASE_URL}/goals/${id}/add`, { amount });
+    return response.data || null;
+  } catch (error: any) {
+    console.error("Error adding to goal:", error.response?.data?.message || error.message || error);
+    return null;
+  }
 }; 

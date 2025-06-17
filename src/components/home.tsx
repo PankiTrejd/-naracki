@@ -31,7 +31,7 @@ export default function Home({
   const [newOrderCount, setNewOrderCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Subscribe to orders from Supabase and handle external orders
+  // Fetch orders and handle external orders
   useEffect(() => {
     // Initial fetch of orders
     getOrders()
@@ -43,39 +43,6 @@ export default function Home({
         setOrders(activeOrders);
       })
       .catch((error) => console.error("Error fetching orders:", error));
-
-    // Subscribe to active orders (not "Done")
-    const unsubscribe = subscribeToOrders((fetchedOrders) => {
-      // Filter out orders that are "Done"
-      const activeOrders = fetchedOrders.filter(
-        (order) => order.status !== "Done",
-      );
-
-      setOrders(activeOrders);
-
-      // Check for new orders to play notification
-      const newOrders = activeOrders.filter((order) => order.status === "New");
-      if (newOrders.length > 0) {
-        setNewOrderCount(newOrders.length);
-
-        // Play notification sound
-        if (notificationSound.current) {
-          notificationSound.current.play().catch((error) => {
-            console.error("Error playing notification sound:", error);
-          });
-        }
-
-        // Show browser notification
-        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-          newOrders.forEach((order) => {
-            new Notification("Нова Нарачка", {
-              body: `Нова нарачка од ${order.customerName}`,
-              icon: "/vite.svg",
-            });
-          });
-        }
-      }
-    });
 
     // Handle external orders (from the form)
     if (externalOrders && externalOrders.length > 0) {
@@ -112,9 +79,6 @@ export default function Home({
         return prevOrders;
       });
     }
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
   }, [externalOrders]);
 
   // Request notification permission on component mount

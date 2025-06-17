@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import OrderCard from "./OrderCard";
 import { Badge } from "@/components/ui/badge";
 import { Order } from "@/types/order";
-import { getOrders, subscribeToOrders, deleteOrder } from "@/lib/orderService";
+import { getOrders, deleteOrder } from "@/lib/orderService";
 import { X } from "lucide-react";
 
 interface CompletedOrdersProps {
@@ -17,7 +17,7 @@ const CompletedOrders = ({
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Subscribe to completed orders from Supabase
+  // Fetch completed orders
   useEffect(() => {
     // Initial fetch of completed orders
     getOrders("Done")
@@ -29,15 +29,6 @@ const CompletedOrders = ({
         console.error("Error fetching completed orders:", error),
       );
 
-    const unsubscribe = subscribeToOrders((fetchedOrders) => {
-      // Only get orders with status "Done"
-      const completedOrders = fetchedOrders.filter(
-        (order) => order.status === "Done",
-      );
-      setOrders(completedOrders);
-      setLastUpdated(new Date());
-    }, "Done");
-
     // Add any external orders that might be passed in
     if (externalOrders.length > 0) {
       setOrders((prev) => {
@@ -48,9 +39,6 @@ const CompletedOrders = ({
         return [...prev, ...newOrders];
       });
     }
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
   }, [externalOrders]);
 
   const toggleOrderExpansion = (orderId: string) => {

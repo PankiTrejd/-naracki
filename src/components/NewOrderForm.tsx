@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { supabase } from "@/lib/supabase";
 
 // InPosta shipment types
 const SHIPMENT_TYPES = [
@@ -177,7 +176,7 @@ const NewOrderForm = ({ onOrderSubmit = () => {}, onOrderRefresh }: NewOrderForm
     };
 
     try {
-      // 3. Add order to Supabase (with tracking code)
+      // 3. Add order to PostgreSQL (with tracking code)
       const { id: orderId, order_number } = await addOrder(newOrder, files);
 
       toast({

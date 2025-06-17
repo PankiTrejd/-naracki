@@ -1,7 +1,8 @@
 export interface Expense {
   id: string;
-  name: string;
-  cost: number;
+  description: string;
+  amount: number;
+  date: string;
   timestamp: string;
   notes?: string;
 } 

@@ -7,7 +7,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Expense } from "@/types/expense";
 import { format } from "date-fns";
 import { mk } from "date-fns/locale";
-import { PlusCircle, History } from "lucide-react";
+import { PlusCircle, History, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,29 +19,32 @@ import {
 interface ExpensesSectionProps {
   expenses: Expense[];
   onAddExpense: (expense: Omit<Expense, "id" | "timestamp">) => void;
+  onDeleteExpense: (id: string) => void;
+  compact?: boolean;
 }
 
-const ExpensesSection = ({ expenses, onAddExpense }: ExpensesSectionProps) => {
+const ExpensesSection = ({ expenses, onAddExpense, onDeleteExpense }: ExpensesSectionProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [newExpense, setNewExpense] = useState({
-    name: "",
-    cost: "",
+    description: "",
+    amount: "",
     notes: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAddExpense({
-      name: newExpense.name,
-      cost: parseFloat(newExpense.cost),
+      description: newExpense.description,
+      amount: parseFloat(newExpense.amount),
+      date: format(new Date(), "yyyy-MM-dd"),
       notes: newExpense.notes,
     });
-    setNewExpense({ name: "", cost: "", notes: "" });
+    setNewExpense({ description: "", amount: "", notes: "" });
     setIsAddDialogOpen(false);
   };
 
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.cost, 0);
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   return (
     <Card className="w-full">
@@ -61,23 +64,23 @@ const ExpensesSection = ({ expenses, onAddExpense }: ExpensesSectionProps) => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Каков Трошок?</Label>
+                  <Label htmlFor="description">Каков Трошок?</Label>
                   <Input
-                    id="name"
-                    value={newExpense.name}
-                    onChange={(e) => setNewExpense({ ...newExpense, name: e.target.value })}
+                    id="description"
+                    value={newExpense.description}
+                    onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cost">Цена (ден.)</Label>
+                  <Label htmlFor="amount">Цена (ден.)</Label>
                   <Input
-                    id="cost"
+                    id="amount"
                     type="number"
                     step="0.01"
                     min="0"
-                    value={newExpense.cost}
-                    onChange={(e) => setNewExpense({ ...newExpense, cost: e.target.value })}
+                    value={newExpense.amount}
+                    onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                     required
                   />
                 </div>
@@ -106,26 +109,55 @@ const ExpensesSection = ({ expenses, onAddExpense }: ExpensesSectionProps) => {
               </DialogHeader>
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-4">
-                  {expenses.map((expense) => (
-                    <Card key={expense.id}>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{expense.name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {format(new Date(expense.timestamp), "dd MMMM yyyy - HH:mm", { locale: mk })}
-                            </p>
-                            {expense.notes && (
-                              <p className="text-sm text-muted-foreground mt-1">{expense.notes}</p>
-                            )}
+                  {expenses.filter(Boolean).map((expense) => {
+                    if (!expense || typeof expense.id === 'undefined') {
+                      console.warn('Skipping invalid expense object:', expense);
+                      return null;
+                    }
+
+                    const formattedDate = expense.timestamp
+                      ? format(new Date(expense.timestamp), "dd MMMM yyyy - HH:mm", { locale: mk })
+                      : 'N/A';
+
+                    // Calculate if deletable (30 minutes)
+                    const createdAt = new Date(expense.timestamp);
+                    const now = new Date();
+                    const minutesPassed = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                    const isDeletable = minutesPassed <= 30;
+
+                    return (
+                      <Card key={expense.id}>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium">{expense.description}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {formattedDate}
+                              </p>
+                              {expense.notes && (
+                                <p className="text-sm text-muted-foreground mt-1">{expense.notes}</p>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <div className="text-lg font-semibold mb-2">
+                                    {(typeof expense.amount === 'number' ? expense.amount : 0).toLocaleString()} ден.
+                                </div>
+                                {isDeletable && (
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => onDeleteExpense(expense.id)}
+                                        className="h-7 px-2"
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-1" /> Избриши
+                                    </Button>
+                                )}
+                            </div>
                           </div>
-                          <div className="text-lg font-semibold">
-                            {expense.cost.toLocaleString()} ден.
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </DialogContent>

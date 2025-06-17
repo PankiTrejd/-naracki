@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getOrders } from "@/lib/orderService";
-import { getExpenses } from "@/lib/expenseService";
+import { getExpenses, addExpense, deleteExpense } from "@/lib/expenseService";
 import { Order } from "@/types/order";
 import { Expense } from "@/types/expense";
 import { format, isSameDay, isSameMonth, parseISO, isWithinInterval } from "date-fns";
 import ExpensesSection from "./ExpensesSection";
-import { addExpense } from "@/lib/expenseService";
+import { addExpense as addExpenseLib } from "@/lib/expenseService";
 import DateRangeSelector, { DateRange } from "./DateRangeSelector";
 import GoalTracker from "./GoalTracker";
 import { Users, TrendingUp, TrendingDown, Percent } from "lucide-react";
@@ -48,6 +48,16 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await deleteExpense(id);
+      setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      // Optionally, show a toast or alert to the user
+    }
+  };
+
   const handleDateRangeChange = (range: DateRange) => {
     setDateRange(range);
   };
@@ -64,7 +74,7 @@ const Dashboard = () => {
 
   // Stats calculations
   const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
-  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.cost, 0);
+  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const orderCount = filteredOrders.length;
   const avgOrder = orderCount > 0 ? (totalRevenue / orderCount) : 0;
 
@@ -116,7 +126,7 @@ const Dashboard = () => {
       </Card>
       {/* Expenses Section */}
       <div className="mb-3">
-        <ExpensesSection expenses={filteredExpenses} onAddExpense={handleAddExpense} compact />
+        <ExpensesSection expenses={filteredExpenses} onAddExpense={handleAddExpense} onDeleteExpense={handleDeleteExpense} compact />
       </div>
       <hr className="my-3 border-muted-foreground/20" />
       {/* Line chart */}
