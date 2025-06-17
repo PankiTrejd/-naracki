@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from "./ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subHours } from "date-fns";
 import { mk } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { DateRange as CalendarDateRange } from "react-day-picker";
@@ -34,7 +34,7 @@ const presets = [
 
 const DateRangeSelector = ({ onRangeChange, className }: DateRangeSelectorProps) => {
   const [date, setDate] = useState<DateRange>({
-    from: new Date(),
+    from: subDays(new Date(), 6), // Default to last 7 days
     to: new Date(),
   });
   const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
@@ -48,8 +48,7 @@ const DateRangeSelector = ({ onRangeChange, className }: DateRangeSelectorProps)
         range = { from: today, to: today };
         break;
       case "yesterday":
-        const yesterday = subDays(today, 1);
-        range = { from: yesterday, to: yesterday };
+        range = { from: subHours(today, 24), to: today }; // Last 24 hours
         break;
       case "last7days":
         range = { from: subDays(today, 6), to: today };
@@ -87,24 +86,29 @@ const DateRangeSelector = ({ onRangeChange, className }: DateRangeSelectorProps)
     }
   };
 
-  // Helper to check if a preset is active
+  // Helper to check if a preset is active - will need to be adjusted for 24-hour yesterday
   const isPresetActive = (key: string) => {
     const today = new Date();
+    // Normalize dates for comparison to ignore time for full day presets, but consider it for 'yesterday' 24h
+    const normalizeDate = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
     switch (key) {
       case "today":
-        return date.from.getTime() === date.to.getTime() && date.from.getTime() === today.getTime();
+        return normalizeDate(date.from).getTime() === normalizeDate(today).getTime() && normalizeDate(date.to).getTime() === normalizeDate(today).getTime();
       case "yesterday":
-        return date.from.getTime() === date.to.getTime() && date.from.getTime() === subDays(today, 1).getTime();
+        // For 24-hour yesterday, check if the range exactly matches subHours(today, 24) to today
+        return date.from.getTime() === subHours(today, 24).getTime() && date.to.getTime() === today.getTime();
       case "last7days":
-        return date.from.getTime() === subDays(today, 6).getTime() && date.to.getTime() === today.getTime();
+        return normalizeDate(date.from).getTime() === normalizeDate(subDays(today, 6)).getTime() && normalizeDate(date.to).getTime() === normalizeDate(today).getTime();
       case "last30days":
-        return date.from.getTime() === subDays(today, 29).getTime() && date.to.getTime() === today.getTime();
+        return normalizeDate(date.from).getTime() === normalizeDate(subDays(today, 29)).getTime() && normalizeDate(date.to).getTime() === normalizeDate(today).getTime();
       case "thisMonth":
-        return date.from.getTime() === startOfMonth(today).getTime() && date.to.getTime() === endOfMonth(today).getTime();
+        return normalizeDate(date.from).getTime() === normalizeDate(startOfMonth(today)).getTime() && normalizeDate(date.to).getTime() === normalizeDate(endOfMonth(today)).getTime();
       case "lastMonth":
-        return date.from.getTime() === startOfMonth(subMonths(today, 1)).getTime() && date.to.getTime() === endOfMonth(subMonths(today, 1)).getTime();
+        const lastMonth = subMonths(today, 1);
+        return normalizeDate(date.from).getTime() === normalizeDate(startOfMonth(lastMonth)).getTime() && normalizeDate(date.to).getTime() === normalizeDate(endOfMonth(lastMonth)).getTime();
       case "thisYear":
-        return date.from.getTime() === startOfYear(today).getTime() && date.to.getTime() === endOfYear(today).getTime();
+        return normalizeDate(date.from).getTime() === normalizeDate(startOfYear(today)).getTime() && normalizeDate(date.to).getTime() === normalizeDate(endOfYear(today)).getTime();
       default:
         return false;
     }

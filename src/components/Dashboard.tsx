@@ -5,7 +5,7 @@ import { getOrders } from "@/lib/orderService";
 import { getExpenses, addExpense, deleteExpense } from "@/lib/expenseService";
 import { Order } from "@/types/order";
 import { Expense } from "@/types/expense";
-import { format, isSameDay, isSameMonth, parseISO, isWithinInterval } from "date-fns";
+import { format, isSameDay, isSameMonth, parseISO, isWithinInterval, subDays } from "date-fns";
 import ExpensesSection from "./ExpensesSection";
 import { addExpense as addExpenseLib } from "@/lib/expenseService";
 import DateRangeSelector, { DateRange } from "./DateRangeSelector";
@@ -17,7 +17,7 @@ const Dashboard = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(),
+    from: subDays(new Date(), 6), // Default to last 7 days (today + 6 previous days)
     to: new Date(),
   });
 
@@ -72,9 +72,16 @@ const Dashboard = () => {
     return isWithinInterval(expenseDate, { start: dateRange.from, end: dateRange.to });
   });
 
+  // Debugging logs for expenses
+  console.log("Dashboard - filteredExpenses:", filteredExpenses);
+  filteredExpenses.forEach((expense, index) => {
+    console.log(`Dashboard - Expense ${index} amount:`, expense.amount, `Type:`, typeof expense.amount);
+  });
+
   // Stats calculations
   const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  console.log("Dashboard - totalExpenses before toLocaleString:", totalExpenses, `Type:`, typeof totalExpenses);
   const orderCount = filteredOrders.length;
   const avgOrder = orderCount > 0 ? (totalRevenue / orderCount) : 0;
 
