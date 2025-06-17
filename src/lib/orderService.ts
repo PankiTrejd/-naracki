@@ -3,6 +3,16 @@ import { Order, Attachment, OrderStatus } from "@/types/order";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+// Helper function to parse numerical fields
+const parseOrderNumerics = (order: any) => ({
+  ...order,
+  total: parseFloat(order.total || '0'),
+  discount: parseFloat(order.discount || '0'),
+  shippingCost: parseFloat(order.shippingCost || '0'),
+  price: parseFloat(order.price || '0'),
+  // Ensure any other numerical fields are parsed here
+});
+
 // Add a new order
 export const addOrder = async (
   order: Order,
@@ -26,7 +36,7 @@ export const addOrder = async (
     }));
 
     const response = await axios.post(`${API_BASE_URL}/api/orders`, { order, files: filesData });
-    return response.data;
+    return parseOrderNumerics(response.data);
   } catch (error: any) {
     console.error("Error adding order:", error.response?.data?.message || error.message || error);
     throw error;
@@ -39,7 +49,7 @@ export const getOrders = async (status?: OrderStatus): Promise<Order[]> => {
     const response = await axios.get(`${API_BASE_URL}/api/orders`, {
       params: { status },
     });
-    return response.data;
+    return response.data.map(parseOrderNumerics);
   } catch (error: any) {
     console.error("Error getting orders:", error.response?.data?.message || error.message || error);
     throw error;
@@ -52,7 +62,10 @@ export const updateOrderStatus = async (
   newStatus: OrderStatus,
 ): Promise<void> => {
   try {
-    await axios.put(`${API_BASE_URL}/orders/${orderId}/status`, { newStatus });
+    const response = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, {
+      status: newStatus,
+    });
+    return parseOrderNumerics(response.data);
   } catch (error: any) {
     console.error("Error updating order status:", error.response?.data?.message || error.message || error);
     throw error;
