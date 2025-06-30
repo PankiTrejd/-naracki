@@ -49,7 +49,7 @@ export const getOrders = async (status?: OrderStatus): Promise<Order[]> => {
     const response = await axios.get(`${API_BASE_URL}/api/orders`, {
       params: { status },
     });
-    return response.data.map(parseOrderNumerics);
+    return response.data.orders.map(parseOrderNumerics);
   } catch (error: any) {
     console.error("Error getting orders:", error.response?.data?.message || error.message || error);
     throw error;
