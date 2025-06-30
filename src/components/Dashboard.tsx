@@ -136,23 +136,6 @@ const Dashboard = () => {
         <ExpensesSection expenses={filteredExpenses} onAddExpense={handleAddExpense} onDeleteExpense={handleDeleteExpense} compact />
       </div>
       <hr className="my-3 border-muted-foreground/20" />
-      {/* Line chart */}
-      <div className="mb-3">
-        <h3 className="text-lg font-semibold mb-2 text-center">Нарачки по ден</h3>
-        <Card className="p-2">
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={ordersPerDay} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Line type="monotone" dataKey="orders" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-      <hr className="my-3 border-muted-foreground/20" />
-      <GoalTracker />
     </div>
   );
 };
