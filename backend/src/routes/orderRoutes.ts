@@ -119,6 +119,8 @@ router.post('/', async (req: Request, res: Response) => {
 router.get('/', async (req: Request, res: Response) => {
   try {
     const status = req.query.status as string;
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+    const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
 
     let query = `
       SELECT
@@ -154,7 +156,17 @@ router.get('/', async (req: Request, res: Response) => {
     query += `
       GROUP BY o.id
       ORDER BY o.timestamp DESC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `;
+    values.push(limit, offset);
+
+    // Get total count for pagination
+    let countQuery = 'SELECT COUNT(*) FROM orders';
+    if (status) {
+      countQuery += ' WHERE status = $1';
+    }
+    const countResult = await db.one(countQuery, status ? [status] : []);
+    const total = parseInt(countResult.count, 10);
 
     const data = await db.any(query, values);
 
@@ -185,7 +197,7 @@ router.get('/', async (req: Request, res: Response) => {
       };
     });
 
-    res.status(200).json(mappedOrders);
+    res.status(200).json({ orders: mappedOrders, total });
   } catch (error: any) {
     console.error("Error getting orders:", error);
     res.status(500).json({ message: "Error getting orders", error: error.message });
@@ -196,13 +208,13 @@ router.get('/', async (req: Request, res: Response) => {
 router.put('/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { newStatus } = req.body;
+    const { status } = req.body;
 
     await db.none(
       `UPDATE orders SET status = $1 WHERE id = $2`,
-      [newStatus, id],
+      [status, id],
     );
-    res.status(200).json({ message: `Order ${id} status updated to ${newStatus}` });
+    res.status(200).json({ message: `Order ${id} status updated to ${status}` });
   } catch (error: any) {
     console.error("Error updating order status:", error);
     res.status(500).json({ message: "Error updating order status", error: error.message });
