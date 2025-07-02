@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: naracki-backend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        sync: false
+      - key: DATABASE_USER
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: DATABASE_NAME
+        sync: false
+      - key: VITE_DO_SPACES_KEY
+        sync: false
+      - key: VITE_DO_SPACES_SECRET
+        sync: false
+      - key: VITE_DO_SPACES_REGION
+        sync: false
+      - key: VITE_DO_SPACES_BUCKET
+        sync: false
+      - key: INPOSTA_TOKEN
+        sync: false 
